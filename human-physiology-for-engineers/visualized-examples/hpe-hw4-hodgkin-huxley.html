@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homework 4 &mdash; Hodgkin-Huxley Action Potentials</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root { --accent:#2b6b8a; --bg:#faf8f5; --ink:#2b2b2b; --muted:#6b6b6b; }
+  * { box-sizing:border-box; }
+  body { font-family:Georgia,'Times New Roman',serif; margin:0; background:var(--bg); color:var(--ink); }
+  header { background:linear-gradient(135deg,#173d52,#2b6b8a); color:#fff; padding:28px 36px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; opacity:.92; max-width:950px; }
+  main { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  .card { background:#fff; border:1px solid #e5ddd3; border-radius:10px; padding:18px 22px; margin-bottom:22px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  h2 { font-size:19px; margin:4px 0 10px; color:var(--accent); }
+  .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px 26px; }
+  .ctl label { display:flex; justify-content:space-between; font-size:14px; margin-bottom:2px; }
+  .ctl label b { font-family:Consolas,monospace; color:var(--accent); }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .presets { margin:14px 0 4px; display:flex; flex-wrap:wrap; gap:8px; }
+  .presets button { font:14px Georgia,serif; padding:7px 14px; border:1px solid var(--accent); background:#fff; color:var(--accent); border-radius:20px; cursor:pointer; }
+  .presets button:hover, .presets button.active { background:var(--accent); color:#fff; }
+  .readouts { display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; }
+  .readout { background:#e6eef3; border-radius:8px; padding:10px 16px; min-width:140px; text-align:center; }
+  .readout .val { font-size:19px; font-weight:bold; color:var(--accent); font-family:Consolas,monospace; }
+  .readout .lbl { font-size:12px; color:var(--muted); }
+  .note { font-size:13.5px; color:var(--muted); line-height:1.55; }
+  .plot { width:100%; height:300px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Homework 4 &mdash; Action Potentials (Hodgkin-Huxley Squid Axon)</h1>
+  <p>Interactive version of Dr.&nbsp;Peskin&rsquo;s <code>HH.m</code> scripts &mdash; identical equations, rate functions and semi-implicit
+     Euler updates (dt = 0.01 ms as the assignment requires). C&thinsp;dv/dt = &minus;g&#772;<sub>Na</sub>m&sup3;h(v&minus;E<sub>Na</sub>)
+     &minus; g&#772;<sub>K</sub>n&#8308;(v&minus;E<sub>K</sub>) &minus; g&#772;<sub>L</sub>(v&minus;E<sub>L</sub>) + i&#8320;(t).
+     &nbsp;<a href="index.html" style="color:#c9e2f0">&larr; back to index</a></p>
+</header>
+<main>
+
+<div class="card">
+  <h2>Experiments from the assignment</h2>
+  <div class="presets" id="presets"></div>
+  <p class="note" id="presetNote">Part 1 default: neuron at rest (&minus;70 mV), a 15 mV shock at t = 0 fires an action potential; a
+  second 15 &micro;A pulse at 10 ms falls in the refractory period and fails.</p>
+</div>
+
+<div class="card">
+  <h2>Stimulus &amp; ion parameters</h2>
+  <div class="controls">
+    <div class="ctl"><label>Initial voltage shock &Delta;v = v<sub>start</sub>&minus;v<sub>hold</sub> (mV) <b id="vDv"></b></label><input type="range" id="Dv" min="0" max="40" step="0.2" value="15"></div>
+    <div class="ctl"><label>Current pulse i<sub>p</sub> (&micro;A) <b id="vIp"></b></label><input type="range" id="Ip" min="0" max="150" step="0.1" value="15"></div>
+    <div class="ctl"><label>Pulse start t<sub>1p</sub> (ms) <b id="vT1"></b></label><input type="range" id="T1" min="0" max="45" step="0.5" value="10"></div>
+    <div class="ctl"><label>Pulse duration (ms) <b id="vW"></b></label><input type="range" id="W" min="0.5" max="50" step="0.5" value="1"></div>
+    <div class="ctl"><label>E<sub>K</sub> (mV) &mdash; sets [K&#8314;]<sub>out</sub> <b id="vEK"></b></label><input type="range" id="EK" min="-115" max="-40" step="0.5" value="-82"></div>
+    <div class="ctl"><label>Experiment length (ms) <b id="vTm"></b></label><input type="range" id="Tm" min="20" max="100" step="5" value="50"></div>
+  </div>
+  <div class="readouts">
+    <div class="readout"><div class="val" id="roKo">&ndash;</div><div class="lbl">[K&#8314;]<sub>out</sub> (mEq/L, Nernst)</div></div>
+    <div class="readout"><div class="val" id="roVhold">&ndash;</div><div class="lbl">Resting v<sub>hold</sub> (mV, chord cond.)</div></div>
+    <div class="readout"><div class="val" id="roPeak">&ndash;</div><div class="lbl">Peak voltage (mV)</div></div>
+    <div class="readout"><div class="val" id="roAPs">&ndash;</div><div class="lbl"># action potentials</div></div>
+  </div>
+  <p class="note">v<sub>hold</sub> is recomputed from the chord-conductance rule of Part 2:
+  v<sub>hold</sub> = 0.0945&thinsp;E<sub>Na</sub> + 0.9055&thinsp;E<sub>K</sub> (so changing E<sub>K</sub> shifts the resting potential exactly
+  as the assignment has you calculate). Gates start at their steady-state values for v<sub>hold</sub>, then the voltage jumps by &Delta;v at t = 0.</p>
+</div>
+
+<div class="card">
+  <div id="plotV" class="plot" style="height:330px"></div>
+  <div id="plotG" class="plot"></div>
+  <div id="plotMHN" class="plot"></div>
+</div>
+
+<div class="card">
+  <h2>Gate story (Part 1 essay, in one paragraph)</h2>
+  <p class="note">
+    Order of events: the <b>m</b> gates open first (fast Na&#8314; activation) &rarr; Na&#8314; rushes in and v shoots toward E<sub>Na</sub> = +45 mV.
+    The <b>h</b> gates then close (Na&#8314; inactivation) ending the upstroke, while the slow <b>n</b> gates open and K&#8314; flows out,
+    repolarizing the membrane and briefly overshooting to a hyperpolarized after-potential (v approaches E<sub>K</sub>).
+    A second shock at 10 ms fails because h is still low (Na&#8314; channels inactivated) and n is still high (K&#8314; conductance elevated) &mdash;
+    the <b>absolute refractory period</b>. Later, a stronger-than-threshold stimulus can fire again (<b>relative refractory period</b>).
+    In <b>hyperkalemia</b> the depolarized rest potential fires once then blocks (inactivated Na&#8314; channels) &mdash; why IV KCl is lethal;
+    in <b>hypokalemia</b> the hyperpolarized rest slows the approach to threshold. With a sustained current, spike <b>frequency</b>
+    codes stimulus intensity until <b>adaptation</b> silences the train.
+  </p>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+// --- rate functions: exact transcriptions of alpham.m ... betan.m ---
+const alpham = v => { const th=(v+45)/10; return th===0 ? 1.0 : 1.0*th/(1-Math.exp(-th)); };
+const betam  = v => 4.0*Math.exp(-(v+70)/18);
+const alphah = v => 0.07*Math.exp(-(v+70)/20);
+const betah  = v => 1.0/(1+Math.exp(-(v+40)/10));
+const alphan = v => { const th=(v+60)/10; return th===0 ? 0.1 : 0.1*th/(1-Math.exp(-th)); };
+const betan  = v => 0.125*Math.exp(-(v+70)/80);
+const snew = (s,a,b,dt) => (s+dt*a)/(1+dt*(a+b));
+
+const C=1.0, gNabar=120, gKbar=36, gLbar=0.3, ENa=45, EL=-59;
+
+const PRESETS = [
+  {name:"Part 1 — default run", vals:{Dv:15,Ip:15,T1:10,W:1,EK:-82,Tm:50},
+   note:"Rest at −70 mV, 15 mV shock at t = 0 → action potential. Second 15 µA pulse at 10 ms fails: it lands in the refractory period (h low, n high)."},
+  {name:"Part 3 — threshold in µA (≈6–7 µA)", vals:{Dv:0,Ip:6.7,T1:10,W:1,EK:-82,Tm:50},
+   note:"No initial shock; only the current pulse. Nudge ip up/down by 0.1 µA around 6–7 µA to find the minimal current that fires — the all-or-nothing threshold."},
+  {name:"Part 3 — threshold in mV (≈ −59 mV)", vals:{Dv:11,Ip:0,T1:10,W:1,EK:-82,Tm:50},
+   note:"ip = 0; only the initial voltage step. Adjust Δv in 0.2 mV steps: below ≈11 mV of depolarization nothing happens, above it a full-size AP fires. Doubling the shock does NOT double the spike."},
+  {name:"Part 4 — absolute refractory (100 µA fails at 6 ms)", vals:{Dv:15,Ip:100,T1:6,W:1,EK:-82,Tm:50},
+   note:"Even a huge 100 µA pulse can't fire during the absolute refractory period. Slide t1p later (7, 8, 9… ms) to find where the 2nd AP first appears — the end of the absolute refractory period."},
+  {name:"Part 4 — relative refractory (threshold current, late)", vals:{Dv:15,Ip:6.7,T1:16,W:1,EK:-82,Tm:50},
+   note:"Now use the threshold current and advance t1p until it fires again — that marks the end of the relative refractory period."},
+  {name:"Part 2 — hyperkalemia ([K⁺]ₒ = 25 mEq/L)", vals:{Dv:15,Ip:0,T1:10,W:1,EK:-69.8,Tm:50},
+   note:"EK = 58·log₁₀(25/400) ≈ −69.8 mV; vhold rises to ≈ −59 mV. The depolarized membrane fires repetitively/blocks — nerve excitability is deranged. This is why hyperkalemia (and IV KCl) is lethal."},
+  {name:"Part 2 — hypokalemia ([K⁺]ₒ = 5 mEq/L)", vals:{Dv:15,Ip:0,T1:10,W:1,EK:-110.4,Tm:50},
+   note:"EK ≈ −110 mV; vhold ≈ −96 mV. The same 15 mV shock now leaves the membrane far from threshold — note the longer time to reach threshold (or complete failure)."},
+  {name:"Part 5 — sustained 1× threshold", vals:{Dv:0,Ip:6.7,T1:0,W:50,EK:-82,Tm:50},
+   note:"Constant current for the whole experiment: a low-frequency spike train."},
+  {name:"Part 5 — sustained 3× threshold", vals:{Dv:0,Ip:20,T1:0,W:50,EK:-82,Tm:50},
+   note:"Stronger sustained stimulus → higher firing frequency. Intensity is coded as frequency (all-or-nothing spikes can't grow taller)."},
+  {name:"Part 5 — sustained 20× threshold (adaptation)", vals:{Dv:0,Ip:134,T1:0,W:50,EK:-82,Tm:50},
+   note:"Very strong sustained stimulus: after the first spikes the membrane adapts (persistent Na⁺ inactivation) and the train collapses."},
+];
+
+function run(){
+  const Dv=+$("Dv").value, ip=+$("Ip").value, t1p=+$("T1").value, W=+$("W").value;
+  const EK=+$("EK").value, tmax=+$("Tm").value;
+  const t2p=t1p+W;
+  $("vDv").textContent=Dv.toFixed(1); $("vIp").textContent=ip.toFixed(1);
+  $("vT1").textContent=t1p.toFixed(1); $("vW").textContent=W.toFixed(1);
+  $("vEK").textContent=EK.toFixed(1); $("vTm").textContent=tmax;
+
+  const Ko = 400*Math.pow(10, EK/58);
+  const vhold = 0.0945*ENa + 0.9055*EK;
+  const vstart = vhold + Dv;
+  $("roKo").textContent = Ko.toFixed(1);
+  $("roVhold").textContent = vhold.toFixed(1);
+
+  const dt=0.01, n=Math.ceil(tmax/dt);
+  // in_mhnv.m: steady-state gates at vhold, then jump to vstart
+  let v=vhold;
+  let m=alpham(v)/(alpham(v)+betam(v));
+  let h=alphah(v)/(alphah(v)+betah(v));
+  let nn=alphan(v)/(alphan(v)+betan(v));
+  v=vstart;
+
+  const keep=2, N=Math.floor(n/keep);
+  const ts=new Float64Array(N), vs=new Float64Array(N),
+        ms=new Float64Array(N), hs=new Float64Array(N), ns=new Float64Array(N),
+        gNas=new Float64Array(N), gKs=new Float64Array(N), is=new Float64Array(N);
+  let j=0;
+  for(let k=0;k<n;k++){
+    const t=(k+1)*dt;
+    m=snew(m,alpham(v),betam(v),dt);
+    h=snew(h,alphah(v),betah(v),dt);
+    nn=snew(nn,alphan(v),betan(v),dt);
+    const gNa=gNabar*m*m*m*h, gK=gKbar*Math.pow(nn,4);
+    const g=gNa+gK+gLbar, gE=gNa*ENa+gK*EK+gLbar*EL;
+    const i0=(t1p<t && t<t2p) ? ip : 0;
+    v=(v+(dt/C)*(gE+i0))/(1+(dt/C)*g);
+    if(k%keep===0 && j<N){ ts[j]=t; vs[j]=v; ms[j]=m; hs[j]=h; ns[j]=nn; gNas[j]=gNa; gKs[j]=gK; is[j]=i0; j++; }
+  }
+
+  // count APs: upward crossings of 0 mV
+  let count=0;
+  for(let k=1;k<N;k++) if(vs[k-1]<0 && vs[k]>=0) count++;
+  const peak=Math.max(...vs);
+  $("roPeak").textContent=peak.toFixed(1);
+  $("roAPs").textContent=count;
+
+  const axis={gridcolor:"#eee", zeroline:false};
+  const lay=(t,yt,extra)=>Object.assign({title:{text:t,font:{size:16}},xaxis:{...axis,title:"time (ms)"},
+    yaxis:{...axis,title:yt},margin:{t:40,l:60,r:14,b:42},paper_bgcolor:"#fff",plot_bgcolor:"#fff",
+    legend:{orientation:"h",y:1.16}},extra||{});
+
+  const pulseShape = ip>0 ? [{type:"rect",x0:t1p,x1:t2p,y0:0,y1:1,yref:"paper",fillcolor:"rgba(200,138,58,.12)",line:{width:0}}] : [];
+  Plotly.react("plotV",[
+      {x:ts,y:vs,name:"membrane potential",line:{color:"#2b6b8a",width:2}}],
+    lay(`Membrane Potential — impulse = ${ip} µA, Δv = ${Dv} mV`,"v (mV)",
+      {shapes:[...pulseShape,
+        {type:"line",x0:0,x1:tmax,y0:vhold,y1:vhold,line:{color:"#999",width:1,dash:"dot"}}],
+       annotations:[{x:tmax,y:vhold,text:"v_hold",showarrow:false,xanchor:"right",yanchor:"bottom",font:{size:11,color:"#888"}},
+        ...(ip>0?[{x:(t1p+t2p)/2,y:1.03,yref:"paper",text:"current pulse",showarrow:false,font:{size:11,color:"#c88a3a"}}]:[])]}),
+    {responsive:true});
+  Plotly.react("plotG",[
+      {x:ts,y:gNas,name:"g_Na = ḡ_Na·m³h",line:{color:"#a3452b",width:1.8}},
+      {x:ts,y:gKs,name:"g_K = ḡ_K·n⁴",line:{color:"#3a7d44",width:1.8}}],
+    lay("Ion Channel Conductances","(µA/mV)/cm²"),{responsive:true});
+  Plotly.react("plotMHN",[
+      {x:ts,y:ms,name:"m (Na⁺ activation)",line:{color:"#a3452b",width:1.8}},
+      {x:ts,y:hs,name:"h (Na⁺ inactivation)",line:{color:"#c88a3a",width:1.8}},
+      {x:ts,y:ns,name:"n (K⁺ activation)",line:{color:"#3a7d44",width:1.8}}],
+    lay("Gate Openings (fraction open)","fraction"),{responsive:true});
+}
+
+function buildPresets(){
+  const holder=$("presets");
+  PRESETS.forEach(p=>{
+    const b=document.createElement("button");
+    b.textContent=p.name;
+    b.onclick=()=>{
+      for(const k in p.vals) $(k).value=p.vals[k];
+      $("presetNote").innerHTML=p.note;
+      document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      run();
+    };
+    holder.appendChild(b);
+  });
+}
+
+buildPresets();
+["Dv","Ip","T1","W","EK","Tm"].forEach(id=>$(id).addEventListener("input",run));
+run();
+</script>
+</main>
+</body>
+</html>

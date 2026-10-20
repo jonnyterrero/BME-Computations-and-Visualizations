@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PFE I &middot; Homework 3 &mdash; Glucose-Insulin Model (OGTT, Diabetes, Metformin)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root { --accent:#2f6b4f; --bg:#faf8f5; --ink:#2b2b2b; --muted:#6b6b6b; }
+  * { box-sizing:border-box; }
+  body { font-family:Georgia,'Times New Roman',serif; margin:0; background:var(--bg); color:var(--ink); }
+  header { background:linear-gradient(135deg,#1d4634,#2f6b4f); color:#fff; padding:28px 36px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; opacity:.92; max-width:950px; }
+  main { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  .card { background:#fff; border:1px solid #e5ddd3; border-radius:10px; padding:18px 22px; margin-bottom:22px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  h2 { font-size:19px; margin:4px 0 10px; color:var(--accent); }
+  .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px 26px; }
+  .ctl label { display:flex; justify-content:space-between; font-size:14px; margin-bottom:2px; }
+  .ctl label b { font-family:Consolas,monospace; color:var(--accent); }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .presets { margin:14px 0 4px; display:flex; flex-wrap:wrap; gap:8px; }
+  .presets button { font:14px Georgia,serif; padding:7px 14px; border:1px solid var(--accent); background:#fff; color:var(--accent); border-radius:20px; cursor:pointer; }
+  .presets button:hover, .presets button.active { background:var(--accent); color:#fff; }
+  .readouts { display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; }
+  .readout { background:#eaf2ec; border-radius:8px; padding:10px 16px; min-width:140px; text-align:center; }
+  .readout .val { font-size:19px; font-weight:bold; color:var(--accent); font-family:Consolas,monospace; }
+  .readout .lbl { font-size:12px; color:var(--muted); }
+  .readout.alert .val { color:#a33; }
+  .note { font-size:13.5px; color:var(--muted); line-height:1.55; }
+  .plot { width:100%; height:320px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:900px){ .row2{grid-template-columns:1fr;} }
+  .chk { font-size:14px; display:flex; align-items:center; gap:8px; margin-top:8px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Homework 3 &mdash; Minimal Glucose-Insulin Model (GLUINSMODEL)</h1>
+  <p>Interactive version of Dr.&nbsp;Khoo&rsquo;s minimal insulin/glucose model (Roth/Lieber modifications). Glucose balance:
+     C<sub>G</sub>&thinsp;dG/dt = Q<sub>L</sub> + Q<sub>meal</sub>(t) &minus; &lambda;G &minus; &eta;&middot;&nu;GI &minus; &mu;(G&minus;&theta;)<sup>+</sup>;
+     insulin balance: C<sub>I</sub>&thinsp;dI/dt = &beta;&middot;&kappa;(G&minus;&phi;)<sup>+</sup> &minus; &alpha;I.
+     &kappa; is the Type&nbsp;1 severity gain (insulin production) and &eta; the Type&nbsp;2 severity gain (insulin sensitivity).
+     &nbsp;<a href="index.html" style="color:#c9ecd6">&larr; back to index</a></p>
+</header>
+<main>
+
+<div class="card">
+  <h2>Scenario presets (from the assignment)</h2>
+  <div class="presets" id="presets"></div>
+  <p class="note" id="presetNote">Normal fasting adult: gains = 1, Q<sub>L</sub> = 8400 mg/hr, no glucose load. Steady state &asymp; 0.81 mg/ml glucose, 0.057 IU/ml insulin.</p>
+</div>
+
+<div class="card">
+  <h2>Patient &amp; test parameters</h2>
+  <div class="controls">
+    <div class="ctl"><label>Type 1 severity &kappa; (insulin production) <b id="vK1"></b></label><input type="range" id="K1" min="0" max="1.5" step="0.05" value="1"></div>
+    <div class="ctl"><label>Type 2 severity &eta; (insulin sensitivity) <b id="vK2"></b></label><input type="range" id="K2" min="0" max="1.5" step="0.05" value="1"></div>
+    <div class="ctl"><label>Liver glucose output Q<sub>L</sub> (mg/hr) <b id="vQL"></b></label><input type="range" id="QL" min="2000" max="14000" step="100" value="8400"></div>
+    <div class="ctl"><label>OGTT glucose dose (g) <b id="vDose"></b></label><input type="range" id="Dose" min="0" max="150" step="5" value="0"></div>
+  </div>
+  <div class="chk"><input type="checkbox" id="metfOn"><label for="metfOn">Give 1 g oral <b>metformin</b> at t = 0 (halves hepatic glucose output at peak concentration)</label></div>
+  <div class="chk"><input type="checkbox" id="injOn"><label for="injOn">Give subcutaneous <b>Humulin injection</b> at t = 0 (adds injected insulin; for a Type 1 patient set &kappa; = 0)</label></div>
+  <div class="ctl" style="max-width:340px; margin-top:6px;"><label>Insulin dose (IU) <b id="vIns"></b></label><input type="range" id="Ins" min="10" max="3000" step="10" value="30"></div>
+  <div class="readouts">
+    <div class="readout"><div class="val" id="roFast">&ndash;</div><div class="lbl">Fasting glucose (mg/ml)</div></div>
+    <div class="readout"><div class="val" id="roFastI">&ndash;</div><div class="lbl">Fasting insulin (IU/ml)</div></div>
+    <div class="readout"><div class="val" id="roG1">&ndash;</div><div class="lbl">Glucose @ 1 hr post-load</div></div>
+    <div class="readout"><div class="val" id="roG2">&ndash;</div><div class="lbl">Glucose @ 2 hr post-load</div></div>
+    <div class="readout" id="roDiagBox"><div class="val" id="roDiag">&ndash;</div><div class="lbl">OGTT interpretation</div></div>
+    <div class="readout"><div class="val" id="roNadir">&ndash;</div><div class="lbl">Glucose nadir (mg/ml)</div></div>
+  </div>
+  <p class="note">OGTT positivity criteria used in the assignment: glucose &ge; 2.0 mg/ml at 1 hr <i>or</i> &ge; 1.4 mg/ml at 2 hr after the 75 g load.
+  Fasting levels are found automatically by pre-running the model to steady state before the test begins (the load is given at t = 0.5 hr).</p>
+</div>
+
+<div class="card">
+  <div class="row2">
+    <div id="plotG" class="plot"></div>
+    <div id="plotI" class="plot"></div>
+  </div>
+  <div class="row2">
+    <div id="plotU" class="plot"></div>
+    <div id="plotD" class="plot"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Pharmacokinetics used (one-compartment oral/subcutaneous models)</h2>
+  <p class="note">
+    <b>Metformin</b>: dose 1 g, V<sub>d</sub> = 15 L, k<sub>a</sub> = 0.275/hr, k<sub>e</sub> = 0.25/hr, F = 0.95.
+    Bateman concentration C(t) = F&middot;D&middot;k<sub>a</sub>/[V<sub>d</sub>(k<sub>a</sub>&minus;k<sub>e</sub>)]&middot;(e<sup>&minus;k<sub>e</sub>t</sup>&minus;e<sup>&minus;k<sub>a</sub>t</sup>).
+    Hepatic output is scaled as Q<sub>L</sub>(t) = Q<sub>L0</sub>&middot;[1 &minus; 0.5&middot;C(t)/C<sub>max,1g</sub>].<br>
+    <b>Humulin</b>: V<sub>d</sub> = 30 L, k<sub>a</sub> = 1.55/hr, k<sub>e</sub> = 0.43/hr, F = 0.65 (peak at &asymp;1.1 hr, duration &asymp;5 hr,
+    matching the Lilly data quoted in the assignment). With the course units a 30 IU dose produces a small plasma concentration relative
+    to the model&rsquo;s fasting insulin of 0.057 IU/ml &mdash; raise the dose slider to explore a clear hypoglycemic nadir.
+  </p>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+// ---- Khoo minimal model parameters (verified: steady state 0.81 mg/ml, 0.057 IU/ml at QL 8400) ----
+const CG = 15000, CI = 15000;    // ml (distribution volumes / capacitances)
+const lam = 2470;                // ml/hr  insulin-independent utilization
+const nu  = 139000;              // ml/hr per (IU/ml) insulin-dependent utilization
+const mu  = 7200, theta = 2.5;   // renal spill above 2.5 mg/ml
+const beta = 1430, phi = 0.51;   // pancreatic production above 0.51 mg/ml
+const alph = 7600;               // insulin destruction
+
+// PK constants
+const MET = {ka:0.275, ke:0.25, Vd:15000, F:0.95, D:1e6};   // mcg, ml
+const INS = {ka:1.55, ke:0.43, Vd:30000, F:0.65};           // IU dose → IU/ml
+
+function bateman(t, p, D){
+  if(t<=0) return 0;
+  return p.F*D*p.ka/(p.Vd*(p.ka-p.ke))*(Math.exp(-p.ke*t)-Math.exp(-p.ka*t));
+}
+const metCmax1g = (()=>{ const tm=Math.log(MET.ka/MET.ke)/(MET.ka-MET.ke); return bateman(tm,MET,MET.D); })();
+
+const PRESETS = [
+  {name:"Normal fasting", vals:{K1:1,K2:1,QL:8400,Dose:0,met:false,inj:false},
+   note:"Gains = 1, no load. The model settles at ≈0.81 mg/ml glucose and ≈0.057 IU/ml insulin — normal fasting values."},
+  {name:"Normal OGTT (75 g)", vals:{K1:1,K2:1,QL:8400,Dose:75,met:false,inj:false},
+   note:"75 g glucose absorbed over 30 min. Watch how quickly a normal pancreas returns glucose below 1.4 mg/ml — and whether any glucose spills into urine."},
+  {name:"Type II diabetic, fasting", vals:{K1:0.6,K2:0.4,QL:8400,Dose:0,met:false,inj:false},
+   note:"κ = 0.6 (blunted insulin production), η = 0.4 (insulin resistance). Fasting glucose settles near 1.2 mg/ml — just under the ADA fasting criterion of 1.26."},
+  {name:"Type II OGTT", vals:{K1:0.6,K2:0.4,QL:8400,Dose:75,met:false,inj:false},
+   note:"Same 75 g load in the diabetic. Compare the 1-hr and 2-hr values with the normal case: the OGTT is the more sensitive test."},
+  {name:"Type II + metformin", vals:{K1:0.6,K2:0.4,QL:8400,Dose:0,met:true,inj:false},
+   note:"1 g oral metformin: hepatic glucose production falls in proportion to drug concentration (−50% at peak). Watch fasting glucose drift down over ~12 hr."},
+  {name:"Type I fasting (κ = 0)", vals:{K1:0,K2:1,QL:8400,Dose:0,met:false,inj:false},
+   note:"No insulin production at all. Glucose rises until renal spilling balances hepatic output (≈2.7 mg/ml) — glycosuria appears in the urine plot."},
+  {name:"Type I + insulin injection", vals:{K1:0,K2:1,QL:8400,Dose:0,met:false,inj:true},
+   note:"Humulin injection into the insulin-free patient. The PK curve (bottom-right) drives glucose down; increase the dose slider to find a hypoglycemic nadir."},
+];
+
+function derivs(G, I, t, p){
+  // p: {K1,K2,QL,mealRate(t),injI(t),metScale(t)}
+  const QLt = p.QL * p.metScale(t);
+  const meal = p.mealRate(t);
+  const Ieff = I + p.injI(t);
+  const dG = (QLt + meal - lam*G - p.K2*nu*G*Ieff - (G>theta ? mu*(G-theta) : 0))/CG;
+  const dI = (p.K1*beta*(G>phi ? (G-phi) : 0) - alph*I)/CI;
+  return [dG, dI];
+}
+
+function integrate(G0, I0, t0, t1, dt, p, record){
+  let G=G0, I=I0;
+  for(let t=t0; t<t1; t+=dt){
+    // RK4
+    const k1 = derivs(G,I,t,p);
+    const k2 = derivs(G+dt/2*k1[0], I+dt/2*k1[1], t+dt/2, p);
+    const k3 = derivs(G+dt/2*k2[0], I+dt/2*k2[1], t+dt/2, p);
+    const k4 = derivs(G+dt*k3[0], I+dt*k3[1], t+dt, p);
+    G += dt/6*(k1[0]+2*k2[0]+2*k3[0]+k4[0]);
+    I += dt/6*(k1[1]+2*k2[1]+2*k3[1]+k4[1]);
+    G = Math.max(G,0); I = Math.max(I,0);
+    if(record) record(t+dt, G, I);
+  }
+  return [G,I];
+}
+
+function run(){
+  const K1 = +$("K1").value, K2 = +$("K2").value, QL = +$("QL").value;
+  const doseG = +$("Dose").value;          // grams
+  const met = $("metfOn").checked, inj = $("injOn").checked;
+  const insDose = +$("Ins").value;
+
+  $("vK1").textContent = K1.toFixed(2);
+  $("vK2").textContent = K2.toFixed(2);
+  $("vQL").textContent = QL;
+  $("vDose").textContent = doseG;
+  $("vIns").textContent = insDose;
+
+  const tLoad = 0.5, tAbs = 0.5;            // load given at 0.5 hr, absorbed over 30 min
+  const mealRate = t => (doseG>0 && t>=tLoad && t<tLoad+tAbs) ? doseG*1000/tAbs : 0;  // mg/hr
+  const injI = t => inj ? bateman(t, INS, insDose)  : 0;   // IU/ml added insulin
+  const metScale = t => met ? 1 - 0.5*bateman(t, MET, MET.D)/metCmax1g : 1;
+
+  // 1) find fasting steady state (no meal, no drugs)
+  const pFast = {K1,K2,QL, mealRate:()=>0, injI:()=>0, metScale:()=>1};
+  let [Gf, If] = integrate(0.81, 0.057, 0, 60, 0.005, pFast, null);
+
+  // 2) main simulation from steady state
+  const tEnd = (met||inj) ? 14 : 10;
+  const p = {K1,K2,QL, mealRate, injI, metScale};
+  const ts=[0], Gs=[Gf], Is=[If], Us=[Gf>theta ? mu*(Gf-theta) : 0], Ds=[0];
+  integrate(Gf, If, 0, tEnd, 0.002, p, (t,G,I)=>{
+    if(Math.round(t/0.002) % 10 === 0){   // record every 0.02 hr
+      ts.push(t); Gs.push(G); Is.push(I + injI(t));
+      Us.push(G>theta ? mu*(G-theta) : 0);
+      Ds.push(met ? bateman(t,MET,MET.D) : (inj ? injI(t)*1000 : 0));
+    }
+  });
+
+  // readouts
+  const at = h => { let best=0,bd=1e9; for(let i=0;i<ts.length;i++){const d=Math.abs(ts[i]-h); if(d<bd){bd=d;best=i;}} return Gs[best]; };
+  const g1 = at(tLoad+1), g2 = at(tLoad+2);
+  const nadir = Math.min(...Gs);
+  $("roFast").textContent = Gf.toFixed(3);
+  $("roFastI").textContent = If.toFixed(4);
+  $("roG1").textContent = doseG>0 ? g1.toFixed(2) : "–";
+  $("roG2").textContent = doseG>0 ? g2.toFixed(2) : "–";
+  $("roNadir").textContent = nadir.toFixed(2);
+  if(doseG>0){
+    const pos = g1>=2.0 || g2>=1.4;
+    $("roDiag").textContent = pos ? "POSITIVE" : "negative";
+    $("roDiagBox").classList.toggle("alert", pos);
+  } else { $("roDiag").textContent = "–"; $("roDiagBox").classList.remove("alert"); }
+
+  const axis = {gridcolor:"#eee", zeroline:false};
+  const lay = (title,yt,extra)=>Object.assign({title:{text:title,font:{size:16}}, xaxis:{...axis,title:"time (hr)"},
+    yaxis:{...axis,title:yt}, margin:{t:40,l:60,r:14,b:44}, paper_bgcolor:"#fff", plot_bgcolor:"#fff"}, extra||{});
+
+  Plotly.react("plotG", [
+      {x:ts, y:Gs, mode:"lines", line:{color:"#2f6b4f",width:2}, name:"glucose"}],
+    lay("Blood Glucose","G (mg/ml)",{shapes:[
+      {type:"line",x0:0,x1:tEnd,y0:2.0,y1:2.0,line:{color:"#c88",width:1,dash:"dot"}},
+      {type:"line",x0:0,x1:tEnd,y0:1.4,y1:1.4,line:{color:"#cb5",width:1,dash:"dot"}}],
+      annotations:[{x:tEnd,y:2.0,text:"2.0 (1-hr criterion)",showarrow:false,xanchor:"right",yanchor:"bottom",font:{size:11,color:"#c88"}},
+                   {x:tEnd,y:1.4,text:"1.4 (2-hr criterion)",showarrow:false,xanchor:"right",yanchor:"bottom",font:{size:11,color:"#cb5"}}]}),
+    {responsive:true});
+
+  Plotly.react("plotI", [
+      {x:ts, y:Is, mode:"lines", line:{color:"#8a2b3f",width:2}}],
+    lay("Plasma Insulin (endogenous + injected)","I (IU/ml)"), {responsive:true});
+
+  Plotly.react("plotU", [
+      {x:ts, y:Us, mode:"lines", line:{color:"#b3893a",width:2}, fill:"tozeroy", fillcolor:"rgba(179,137,58,.15)"}],
+    lay("Urinary Glucose Excretion Rate (renal spill above θ = 2.5 mg/ml)","mg/hr"), {responsive:true});
+
+  Plotly.react("plotD", [
+      {x:ts, y:Ds, mode:"lines", line:{color:"#5a5a8a",width:2}}],
+    lay(met ? "Metformin Plasma Concentration" : (inj ? "Injected Insulin Concentration (×10³ IU/ml)" : "Drug Concentration (enable metformin or insulin)"),
+        met ? "mcg/ml" : "mIU/ml"), {responsive:true});
+}
+
+function buildPresets(){
+  const holder = $("presets");
+  PRESETS.forEach(p=>{
+    const b = document.createElement("button");
+    b.textContent = p.name;
+    b.onclick = ()=>{
+      $("K1").value=p.vals.K1; $("K2").value=p.vals.K2; $("QL").value=p.vals.QL; $("Dose").value=p.vals.Dose;
+      $("metfOn").checked=p.vals.met; $("injOn").checked=p.vals.inj;
+      $("presetNote").innerHTML = p.note;
+      document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      run();
+    };
+    holder.appendChild(b);
+  });
+}
+
+buildPresets();
+["K1","K2","QL","Dose","Ins"].forEach(id=>$(id).addEventListener("input", run));
+["metfOn","injOn"].forEach(id=>$(id).addEventListener("change", run));
+run();
+</script>
+</main>
+</body>
+</html>

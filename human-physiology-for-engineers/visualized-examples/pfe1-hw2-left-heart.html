@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PFE I &middot; Homework 2 &mdash; Left Heart &amp; Aorta Model</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root { --accent:#8a2b3f; --bg:#faf8f5; --ink:#2b2b2b; --muted:#6b6b6b; }
+  * { box-sizing:border-box; }
+  body { font-family:Georgia,'Times New Roman',serif; margin:0; background:var(--bg); color:var(--ink); }
+  header { background:linear-gradient(135deg,#5d1c2b,#8a2b3f); color:#fff; padding:28px 36px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; opacity:.92; max-width:950px; }
+  main { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  .card { background:#fff; border:1px solid #e5ddd3; border-radius:10px; padding:18px 22px; margin-bottom:22px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  h2 { font-size:19px; margin:4px 0 10px; color:var(--accent); }
+  .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px 26px; }
+  .ctl label { display:flex; justify-content:space-between; font-size:14px; margin-bottom:2px; }
+  .ctl label b { font-family:Consolas,monospace; color:var(--accent); }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .presets { margin:14px 0 4px; display:flex; flex-wrap:wrap; gap:8px; }
+  .presets button { font:14px Georgia,serif; padding:7px 14px; border:1px solid var(--accent); background:#fff; color:var(--accent); border-radius:20px; cursor:pointer; }
+  .presets button:hover, .presets button.active { background:var(--accent); color:#fff; }
+  .readouts { display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; }
+  .readout { background:#f4ede4; border-radius:8px; padding:10px 16px; min-width:130px; text-align:center; }
+  .readout .val { font-size:20px; font-weight:bold; color:var(--accent); font-family:Consolas,monospace; }
+  .readout .lbl { font-size:12px; color:var(--muted); }
+  .note { font-size:13.5px; color:var(--muted); line-height:1.55; }
+  .plot { width:100%; height:330px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:900px){ .row2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>Homework 2 &mdash; Left Heart &amp; Aorta (Cardio_SA_LV)</h1>
+  <p>Interactive version of the Simulink model of Sutton/Lieber (from Hoppensteadt &amp; Peskin). The left ventricle is a
+     time-varying compliance C<sub>LV</sub>(t); the mitral and aortic valves are ideal diodes with small resistances;
+     the systemic arteries are a Windkessel (C<sub>sa</sub>, R<sub>s</sub>). Aortic insufficiency adds diastolic backflow
+     through the parameter <code>AoBkflo</code>. &nbsp;<a href="index.html" style="color:#ffc9d4">&larr; back to index</a></p>
+</header>
+<main>
+
+<div class="card">
+  <h2>Scenario presets (from the assignment)</h2>
+  <div class="presets" id="presets"></div>
+  <p class="note" id="presetNote">Normal course parameters from <code>Command_Cardio_SA_LV.m</code>.</p>
+</div>
+
+<div class="card">
+  <h2>Model parameters</h2>
+  <div class="controls">
+    <div class="ctl"><label>Aortic valve resistance R<sub>Ao</sub> <b id="vRAo"></b></label><input type="range" id="RAo" min="-2" max="0.31" step="0.01" value="-2" data-log="1"></div>
+    <div class="ctl"><label>Mitral valve resistance R<sub>mi</sub> <b id="vRmi"></b></label><input type="range" id="Rmi" min="-2" max="0.31" step="0.01" value="-2" data-log="1"></div>
+    <div class="ctl"><label>Aortic backflow AoBkflo <b id="vBk"></b></label><input type="range" id="Bk" min="0" max="0.01" step="0.0001" value="0"></div>
+    <div class="ctl"><label>Left atrial pressure P<sub>la</sub> (mmHg) <b id="vPla"></b></label><input type="range" id="Pla" min="2" max="40" step="0.2" value="5"></div>
+    <div class="ctl"><label>Diastolic compliance C<sub>LVD</sub> (L/mmHg) <b id="vCLVD"></b></label><input type="range" id="CLVD" min="0.002" max="0.03" step="0.0005" value="0.015"></div>
+    <div class="ctl"><label>Systolic compliance C<sub>LVS</sub> (&times;10<sup>-5</sup> L/mmHg) <b id="vCLVS"></b></label><input type="range" id="CLVS" min="1" max="20" step="0.25" value="5"></div>
+    <div class="ctl"><label>Systemic compliance C<sub>sa</sub> (L/mmHg) <b id="vCsa"></b></label><input type="range" id="Csa" min="0.0005" max="0.004" step="0.00005" value="0.00175"></div>
+    <div class="ctl"><label>Systemic resistance R<sub>s</sub> <b id="vRs"></b></label><input type="range" id="Rs" min="5" max="40" step="0.25" value="17.28"></div>
+  </div>
+  <div class="readouts">
+    <div class="readout"><div class="val" id="roBP">&ndash;</div><div class="lbl">Arterial BP (sys/dia)</div></div>
+    <div class="readout"><div class="val" id="roLVP">&ndash;</div><div class="lbl">Peak LV pressure (mmHg)</div></div>
+    <div class="readout"><div class="val" id="roSV">&ndash;</div><div class="lbl">Stroke volume (mL)</div></div>
+    <div class="readout"><div class="val" id="roCO">&ndash;</div><div class="lbl">Cardiac output (L/min)</div></div>
+    <div class="readout"><div class="val" id="roEDV">&ndash;</div><div class="lbl">EDV / ESV (mL)</div></div>
+    <div class="readout"><div class="val" id="roW">&ndash;</div><div class="lbl">Stroke work (J/beat)</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row2">
+    <div id="plotPress" class="plot"></div>
+    <div id="plotFlow" class="plot"></div>
+  </div>
+  <div class="row2">
+    <div id="plotPV" class="plot"></div>
+    <div id="plotCLV" class="plot"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Reading the model like the assignment does</h2>
+  <p class="note">
+    <b>Aortic stenosis</b> (R<sub>Ao</sub> 0.01&rarr;1): LV systolic pressure rises far above arterial pressure (a pressure gradient
+    across the valve appears in the pressure plot), stroke volume falls. Compensation = stiffer hypertrophied ventricle
+    (lower C<sub>LVS</sub>, C<sub>LVD</sub>, found by the iterative K<sub>s</sub>/P<sub>max</sub> rule) plus a raised left atrial pressure to restore filling.<br>
+    <b>Mitral stenosis</b> (R<sub>mi</sub> 0.01&rarr;1): the ventricle can&rsquo;t fill &mdash; SV, CO and arterial pressure collapse. Compensation
+    is a markedly raised P<sub>la</sub> (increase in 2&ndash;2.5 mmHg steps until CO is restored), at the cost of pulmonary congestion.<br>
+    <b>Aortic insufficiency</b> (AoBkflo 0&rarr;0.002): negative aortic flow appears in diastole, diastolic arterial pressure drops
+    (water-hammer pulse, wide pulse pressure), the PV loop widens and stroke work rises for the same forward output.<br>
+    On the <b>PV loop</b>: bottom edge = diastolic filling (mitral open), right corner = end-diastolic volume, left edge top corner = end-systolic point;
+    the loop area is the stroke work.
+  </p>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+// ---- fixed course parameters ----
+const T = 0.0125, Ts = 0.0050;         // min
+const tauS = 0.0025, tauD = 0.005;     // min
+const Vlvd = 0.027, Vsad = 0.825;      // L
+const Plvi = 5;
+
+const PRESETS = [
+  {name:"Normal", vals:{RAo:0.01,Rmi:0.01,Bk:0,Pla:5,CLVD:0.0150,CLVS5:5,Csa:0.00175,Rs:17.28,Psai:80},
+   note:"Course defaults: RAo=Rmi=0.01, AoBkflo=0, Pla=5, CLVD=0.015, CLVS=5e-5."},
+  {name:"Aortic stenosis (uncompensated)", vals:{RAo:1,Rmi:0.01,Bk:0,Pla:5,CLVD:0.0150,CLVS5:5,Csa:0.00175,Rs:17.28,Psai:70},
+   note:"RAo raised 100-fold to 1 mmHg/(L/min). Note the systolic pressure gradient PLV ≫ PSA and the reduced stroke volume."},
+  {name:"Aortic stenosis (compensated)", vals:{RAo:1,Rmi:0.01,Bk:0,Pla:9,CLVD:0.0089,CLVS5:3,Csa:0.00175,Rs:17.28,Psai:75},
+   note:"Hypertrophy compensation: CLVS & CLVD scaled down as K/PLVmax (iterated to convergence) and Pla raised until CO ≈ normal."},
+  {name:"Mitral stenosis (uncompensated)", vals:{RAo:0.01,Rmi:1,Bk:0,Pla:5,CLVD:0.0150,CLVS5:5,Csa:0.00175,Rs:17.28,Psai:30},
+   note:"Rmi = 1: filling is throttled. SV, CO and arterial pressure collapse — compensation is mandatory."},
+  {name:"Mitral stenosis (compensated)", vals:{RAo:0.01,Rmi:1,Bk:0,Pla:24,CLVD:0.0150,CLVS5:5,Csa:0.00175,Rs:17.28,Psai:78},
+   note:"Left atrial pressure raised (increments of 2–2.5 mmHg) until CO ≈ normal. The needed Pla > 20 mmHg explains pulmonary edema and atrial fibrillation."},
+  {name:"Aortic insufficiency", vals:{RAo:0.01,Rmi:0.01,Bk:0.002,Pla:5,CLVD:0.0150,CLVS5:5,Csa:0.00175,Rs:17.28,Psai:65},
+   note:"AoBkflo = 0.002: aortic backflow during diastole. See negative aortic flow, fallen diastolic pressure, widened pulse pressure and enlarged PV loop."},
+  {name:"Aortic insufficiency (compensated)", vals:{RAo:0.01,Rmi:0.01,Bk:0.002,Pla:8.5,CLVD:0.0210,CLVS5:4,Csa:0.00175,Rs:17.28,Psai:75},
+   note:"Dilated ventricle: CLVD increased (larger capacitance/contractile range) and Pla raised until systolic BP is back to ~102–107 mmHg."},
+];
+
+function clv(t){   // time-varying ventricular compliance (Hoppensteadt–Peskin)
+  const CLVD = +$("CLVD").value, CLVS = (+$("CLVS").value)*1e-5;
+  const tc = t % T;
+  if(tc < Ts){
+    const e = (1-Math.exp(-tc/tauS))/(1-Math.exp(-Ts/tauS));
+    return CLVD*Math.pow(CLVS/CLVD, e);
+  }
+  const e = (1-Math.exp(-(tc-Ts)/tauD))/(1-Math.exp(-(T-Ts)/tauD));
+  return CLVS*Math.pow(CLVD/CLVS, e);
+}
+
+let Psai = 80;   // starting arterial pressure, adjustable via preset
+
+function logVal(id){ return Math.pow(10, +$(id).value); }
+
+function run(){
+  const RAo = logVal("RAo"), Rmi = logVal("Rmi");
+  const Bk = +$("Bk").value, Pla = +$("Pla").value;
+  const Csa = +$("Csa").value, Rs = +$("Rs").value;
+  const CLVD = +$("CLVD").value, CLVS = (+$("CLVS").value)*1e-5;
+
+  $("vRAo").textContent = RAo.toFixed(3);
+  $("vRmi").textContent = Rmi.toFixed(3);
+  $("vBk").textContent = Bk.toFixed(4);
+  $("vPla").textContent = Pla.toFixed(1);
+  $("vCLVD").textContent = CLVD.toFixed(4);
+  $("vCLVS").textContent = (+$("CLVS").value).toFixed(2);
+  $("vCsa").textContent = Csa.toFixed(5);
+  $("vRs").textContent = Rs.toFixed(2);
+
+  const nBeats = 16;
+  const dt = T/4000;                       // 4000 steps/beat
+  const n = Math.round(nBeats*T/dt);
+  let Vlv = clv(0)*Plvi + Vlvd;
+  let Vsa = Csa*Psai + Vsad;
+
+  const keep = 4;                           // downsample for plotting
+  const N = Math.floor(n/keep);
+  const ts=new Float64Array(N), plv=new Float64Array(N), psa=new Float64Array(N),
+        qmi=new Float64Array(N), qao=new Float64Array(N), qs=new Float64Array(N),
+        vlv=new Float64Array(N), cl=new Float64Array(N);
+
+  let j=0;
+  for(let k=0;k<n;k++){
+    const t = k*dt;
+    const C = clv(t);
+    const Plv = (Vlv - Vlvd)/C;
+    const Psa = (Vsa - Vsad)/Csa;
+    const Qmi = Pla > Plv ? (Pla-Plv)/Rmi : 0;
+    let QAo;
+    if(Plv >= Psa) QAo = (Plv-Psa)/RAo;
+    else           QAo = -Bk*(Psa-Plv)/RAo;   // insufficiency backflow
+    const Qs = Psa/Rs;
+    Vlv += dt*(Qmi - QAo);
+    Vsa += dt*(QAo - Qs);
+    if(k%keep===0 && j<N){
+      ts[j]=t*60; plv[j]=Plv; psa[j]=Psa; qmi[j]=Qmi; qao[j]=QAo; qs[j]=Qs; vlv[j]=Vlv*1000; cl[j]=C; j++;
+    }
+  }
+
+  // metrics from last 2 beats
+  const perN = Math.round(T/(dt*keep));
+  const i0 = N - 2*perN;
+  const lastPsa = psa.slice(i0), lastPlv = plv.slice(i0), lastVlv = vlv.slice(i0);
+  const sys = Math.max(...lastPsa), dia = Math.min(...lastPsa);
+  const lvmax = Math.max(...lastPlv);
+  const EDV = Math.max(...lastVlv), ESV = Math.min(...lastVlv);
+  const SV = EDV - ESV;                       // mL
+  const CO = SV/1000 * (1/T);                 // L/min
+  // stroke work: loop integral P dV over last beat (mmHg·mL → J: ×0.00013332)
+  let W=0;
+  for(let k=i0+1;k<N;k++) W += 0.5*(plv[k]+plv[k-1])*(vlv[k]-vlv[k-1]);
+  W = Math.abs(W)/2 * 0.00013332;            // /2: two beats summed
+
+  $("roBP").textContent = `${sys.toFixed(0)} / ${dia.toFixed(0)}`;
+  $("roLVP").textContent = lvmax.toFixed(0);
+  $("roSV").textContent = SV.toFixed(1);
+  $("roCO").textContent = CO.toFixed(2);
+  $("roEDV").textContent = `${EDV.toFixed(0)} / ${ESV.toFixed(0)}`;
+  $("roW").textContent = W.toFixed(3);
+
+  const axis = {gridcolor:"#eee", zeroline:false};
+  const lay = (title,xt,yt)=>({title:{text:title,font:{size:16}}, xaxis:{...axis,title:xt}, yaxis:{...axis,title:yt},
+    margin:{t:40,l:58,r:14,b:44}, paper_bgcolor:"#fff", plot_bgcolor:"#fff", legend:{orientation:"h",y:1.14}});
+
+  Plotly.react("plotPress", [
+      {x:ts, y:psa, name:"P<sub>SA</sub>", line:{color:"#2b5f8a",width:1.8}},
+      {x:ts, y:plv, name:"P<sub>LV</sub>", line:{color:"#8a2b3f",width:1.8}}],
+    lay("Ventricular & Arterial Pressure","time (s)","mmHg"), {responsive:true});
+
+  Plotly.react("plotFlow", [
+      {x:ts, y:qmi, name:"Q<sub>mi</sub>", line:{color:"#3a7d44",width:1.5}},
+      {x:ts, y:qao, name:"Q<sub>Ao</sub>", line:{color:"#8a2b3f",width:1.5}},
+      {x:ts, y:qs, name:"Q<sub>s</sub>", line:{color:"#b3893a",width:1.5}}],
+    lay("Blood Flows","time (s)","L/min"), {responsive:true});
+
+  // PV loop: last 4 beats
+  const iPV = N - 4*perN;
+  Plotly.react("plotPV", [
+      {x:vlv.slice(iPV), y:plv.slice(iPV), mode:"lines", line:{color:"#8a2b3f",width:2},
+       hovertemplate:"V=%{x:.0f} mL<br>P=%{y:.0f} mmHg<extra></extra>"}],
+    lay("Cardiac Cycle (PV loop)","LV volume (mL)","LV pressure (mmHg)"), {responsive:true});
+
+  Plotly.react("plotCLV", [
+      {x:ts.slice(i0), y:Array.from(cl.slice(i0)), mode:"lines", line:{color:"#5a5a8a",width:2}}],
+    lay("Ventricular Compliance C<sub>LV</sub>(t)","time (s)","L/mmHg"), {responsive:true});
+}
+
+function buildPresets(){
+  const holder = $("presets");
+  PRESETS.forEach(p=>{
+    const b = document.createElement("button");
+    b.textContent = p.name;
+    b.onclick = ()=>{
+      $("RAo").value = Math.log10(p.vals.RAo);
+      $("Rmi").value = Math.log10(p.vals.Rmi);
+      $("Bk").value = p.vals.Bk; $("Pla").value = p.vals.Pla;
+      $("CLVD").value = p.vals.CLVD; $("CLVS").value = p.vals.CLVS5;
+      $("Csa").value = p.vals.Csa; $("Rs").value = p.vals.Rs;
+      Psai = p.vals.Psai;
+      $("presetNote").innerHTML = p.note;
+      document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      run();
+    };
+    holder.appendChild(b);
+  });
+}
+
+buildPresets();
+["RAo","Rmi","Bk","Pla","CLVD","CLVS","Csa","Rs"].forEach(id=>$(id).addEventListener("input", run));
+run();
+</script>
+</main>
+</body>
+</html>

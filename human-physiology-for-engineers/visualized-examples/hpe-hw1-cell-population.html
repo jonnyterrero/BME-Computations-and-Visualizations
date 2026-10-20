@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homework 1 &mdash; Cell Population Models (Logistic, Predator-Prey, Three Species)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root { --accent:#3a5f8a; --bg:#faf8f5; --ink:#2b2b2b; --muted:#6b6b6b; }
+  * { box-sizing:border-box; }
+  body { font-family:Georgia,'Times New Roman',serif; margin:0; background:var(--bg); color:var(--ink); }
+  header { background:linear-gradient(135deg,#24405e,#3a5f8a); color:#fff; padding:28px 36px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; opacity:.92; max-width:950px; }
+  main { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  .card { background:#fff; border:1px solid #e5ddd3; border-radius:10px; padding:18px 22px; margin-bottom:22px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  h2 { font-size:20px; margin:4px 0 10px; color:var(--accent); }
+  h3 { font-size:15px; margin:14px 0 6px; color:#555; }
+  .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px 26px; }
+  .ctl label { display:flex; justify-content:space-between; font-size:14px; margin-bottom:2px; }
+  .ctl label b { font-family:Consolas,monospace; color:var(--accent); }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .readouts { display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; }
+  .readout { background:#e9eef5; border-radius:8px; padding:10px 16px; min-width:150px; text-align:center; }
+  .readout .val { font-size:18px; font-weight:bold; color:var(--accent); font-family:Consolas,monospace; }
+  .readout .lbl { font-size:12px; color:var(--muted); }
+  .note { font-size:13.5px; color:var(--muted); line-height:1.55; }
+  .plot { width:100%; height:330px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:900px){ .row2{grid-template-columns:1fr;} }
+  .btns { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+  .btns button { font:14px Georgia,serif; padding:6px 13px; border:1px solid var(--accent); background:#fff; color:var(--accent); border-radius:18px; cursor:pointer; }
+  .btns button:hover, .btns button.active { background:var(--accent); color:#fff; }
+  table.eq { border-collapse:collapse; font-size:13.5px; margin-top:8px; }
+  table.eq th, table.eq td { border:1px solid #ddd; padding:5px 12px; text-align:center; }
+  table.eq th { background:#e9eef5; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Homework 1 &mdash; Cell Population Dynamics</h1>
+  <p>Three problems: logistic growth of cells in a Petri dish (with Euler time-step error analysis), a two-species
+     predator-prey system with phase-plane analysis, and the stiff three-species <i>Bacillus</i> / <i>Staphylococcus</i> /
+     bacteriophage model. &nbsp;<a href="index.html" style="color:#cfe0f5">&larr; back to index</a></p>
+</header>
+<main>
+
+<!-- ============ PROBLEM 1: LOGISTIC ============ -->
+<div class="card">
+  <h2>Problem 1 &mdash; Logistic growth in a 120 cm&sup2; Petri dish</h2>
+  <p class="note">dP/dt = rP(1 &minus; P/K), &nbsp; K = 5&times;10<sup>8</sup> cells, r = 0.56/day. Solved with forward Euler exactly as the assignment
+  requires, at three time steps (&Delta;t = 1 hr, 1 min, 1 s) to show discretization error.</p>
+  <div class="controls">
+    <div class="ctl"><label>Seeding density (cells/cm&sup2;) <b id="vSeed"></b></label><input type="range" id="seed" min="500" max="60000" step="250" value="3000"></div>
+    <div class="ctl"><label>Growth rate r (/day) <b id="vR"></b></label><input type="range" id="rGrow" min="0.1" max="1.2" step="0.01" value="0.56"></div>
+  </div>
+  <div class="readouts">
+    <div class="readout"><div class="val" id="roT80">&ndash;</div><div class="lbl">Time to 80% of K</div></div>
+    <div class="readout"><div class="val" id="roP3">&ndash;</div><div class="lbl">P(3 days), &Delta;t = 1 s</div></div>
+    <div class="readout"><div class="val" id="roE1">&ndash;</div><div class="lbl">% error @3 d, &Delta;t = 1 hr</div></div>
+    <div class="readout"><div class="val" id="roE2">&ndash;</div><div class="lbl">% error @3 d, &Delta;t = 1 min</div></div>
+  </div>
+  <div class="row2">
+    <div id="plotLog" class="plot"></div>
+    <div id="plotdP" class="plot"></div>
+  </div>
+  <p class="note">Assignment question: can a seeding density reach 80% saturation in <b>exactly 8 days</b>? Drag the seeding
+  slider and watch the &ldquo;time to 80%&rdquo; readout &mdash; with r fixed at 0.56/day you can solve for the required P&#8320;
+  (&asymp;13&thinsp;730 cells/cm&sup2;), so yes, it is possible.</p>
+</div>
+
+<!-- ============ PROBLEM 2: PREDATOR-PREY ============ -->
+<div class="card">
+  <h2>Problem 2 &mdash; Predator-prey system with logistic prey</h2>
+  <p class="note">dx/dt = x(1 &minus; x/100) &minus; 2.5xy, &nbsp; dy/dt = &minus;y + 0.25xy &nbsp; (units: thousands of individuals; time in weeks).
+  This is a <b>predator-prey</b> model (y benefits from x, x is harmed by y): if x goes extinct y starves; if y goes
+  extinct x grows logistically to its carrying capacity of 100 (100&thinsp;000).</p>
+  <div class="controls">
+    <div class="ctl"><label>x&#8320; (prey, thousands) <b id="vX0"></b></label><input type="range" id="x0" min="1" max="100" step="1" value="50"></div>
+    <div class="ctl"><label>y&#8320; (predator, thousands) <b id="vY0"></b></label><input type="range" id="y0" min="0" max="60" step="1" value="30"></div>
+    <div class="ctl"><label>Simulation length (weeks) <b id="vTpp"></b></label><input type="range" id="tpp" min="50" max="800" step="10" value="200"></div>
+  </div>
+  <div class="row2">
+    <div id="plotPPt" class="plot"></div>
+    <div id="plotPPxy" class="plot"></div>
+  </div>
+  <div class="row2">
+    <div id="plotdx" class="plot"></div>
+    <div id="plotdy" class="plot"></div>
+  </div>
+  <h3>Equilibrium points &amp; Jacobian stability (as asked in the assignment)</h3>
+  <table class="eq">
+    <tr><th>Point (x*, y*)</th><th>Eigenvalues of Jacobian</th><th>Classification</th></tr>
+    <tr><td>(0, 0)</td><td>&lambda; = 1, &minus;1</td><td>Saddle &mdash; unstable</td></tr>
+    <tr><td>(100, 0)</td><td>&lambda; = &minus;1, 24</td><td>Saddle &mdash; unstable (carrying capacity is <i>not</i> stable once predators exist)</td></tr>
+    <tr><td>(4, 0.384)</td><td>&lambda; = &minus;0.02 &plusmn; 0.98i</td><td>Stable spiral (complex eigenvalues, negative real part) &mdash; the limit spiral seen in the phase plots</td></tr>
+  </table>
+  <p class="note">&asymp;4000 individuals of x sustain &asymp;384 individuals of y at coexistence. The inward spiral in the
+  dx&ndash;x and dy&ndash;y plots is the signature of the complex eigenvalues with negative real part.</p>
+</div>
+
+<!-- ============ PROBLEM 3: THREE SPECIES ============ -->
+<div class="card">
+  <h2>Problem 3 &mdash; <i>Bacillus subtilis</i>, <i>Staphylococcus aureus</i> &amp; bacteriophage (stiff system)</h2>
+  <p class="note">Correct model (option 1):&nbsp;
+    db/dt = k&#8321;b(1 &minus; b/CC&#8321;) &minus; xbp, &nbsp;
+    ds/dt = k&#8322;s(1 &minus; s/CC&#8322; &minus; mb/CC&#8322;), &nbsp;
+    dp/dt = p(xb &minus; n).
+    Bacillus grows logistically and is preyed on by the phage; Staph is poisoned by bacitracin (the mb term);
+    the phage needs Bacillus to replicate.</p>
+  <div class="controls">
+    <div class="ctl"><label>Run time (hours) <b id="vT3"></b></label><input type="range" id="t3" min="20" max="100" step="5" value="20"></div>
+    <div class="ctl"><label>Euler &Delta;t (hours) &mdash; demonstrates stiffness! <b id="vDt3"></b></label><input type="range" id="dt3" min="-3.3" max="-0.5" step="0.1" value="-3"></div>
+    <div class="ctl"><label>Phage attack rate x (&times;10<sup>-6</sup>) <b id="vXr"></b></label><input type="range" id="xr" min="0.1" max="5" step="0.1" value="1"></div>
+    <div class="ctl"><label>Bacitracin competition m (&times;10<sup>4</sup>) <b id="vM"></b></label><input type="range" id="mC" min="0" max="5" step="0.1" value="1.7"></div>
+  </div>
+  <div class="btns">
+    <label class="note" style="align-self:center">Y axis:</label>
+    <button id="linBtn" class="active">linear</button>
+    <button id="logBtn">log</button>
+  </div>
+  <div id="plot3" class="plot" style="height:400px"></div>
+  <p class="note"><b>Stiffness demo:</b> the assignment has you read about stiff ODEs &mdash; drag the &Delta;t slider to the right
+  (&Delta;t &gt; ~0.05 hr) and watch the Euler solution blow up into numerical garbage, then bring it back to 0.001 hr.
+  With the default parameters the Bacillus and phage settle into predator-prey oscillations around b = n/x = 9&times;10<sup>5</sup>,
+  while the Staph population is wiped out by bacitracin. All-zero populations are an equilibrium, but not a stable one:
+  add one Staph cell and it grows &mdash; so a small perturbation drives the system away.</p>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+/* ---------- Problem 1: logistic ---------- */
+function runLogistic(){
+  const seed = +$("seed").value, r = +$("rGrow").value;
+  $("vSeed").textContent = seed.toLocaleString();
+  $("vR").textContent = r.toFixed(2);
+  const K = 5e8, P0 = seed*120, days = 30;
+
+  function euler(dtDay, keepEvery){
+    const n = Math.round(days/dtDay);
+    const t=[0], P=[P0], dP=[r*P0*(1-P0/K)];
+    let p = P0;
+    for(let k=1;k<=n;k++){
+      p = p + dtDay*r*p*(1-p/K);
+      if(k%keepEvery===0){ t.push(k*dtDay); P.push(p); dP.push(r*p*(1-p/K)); }
+    }
+    return {t,P,dP};
+  }
+  const hr  = euler(1/24, 2);          // Δt = 1 hour
+  const min = euler(1/1440, 60);       // Δt = 1 minute
+  const sec = euler(1/86400, 3600);    // Δt = 1 second
+
+  const P3 = ser => { for(let i=0;i<ser.t.length;i++) if(ser.t[i]>=3) return ser.P[i]; };
+  const p3s = P3(sec), p3m = P3(min), p3h = P3(hr);
+  $("roP3").textContent = p3s.toExponential(3);
+  $("roE1").textContent = (100*Math.abs(p3h-p3s)/p3s).toFixed(3)+" %";
+  $("roE2").textContent = (100*Math.abs(p3m-p3s)/p3s).toFixed(4)+" %";
+
+  // time to 80% K (analytic logistic solution for precision)
+  const A = (K-P0)/P0;
+  const t80 = Math.log(4*A)/r;   // P=0.8K → K/P−1 = 0.25·... solve: 0.8K = K/(1+Ae^{−rt}) → Ae^{−rt}=0.25 → t=ln(4A)/r
+  if(t80>0){
+    const d = Math.floor(t80), hrs = Math.floor((t80-d)*24), mins = Math.floor(((t80-d)*24-hrs)*60), s = Math.round((((t80-d)*24-hrs)*60-mins)*60);
+    $("roT80").textContent = `${d} d : ${hrs} h : ${mins} m : ${s} s`;
+  } else $("roT80").textContent = "already past";
+
+  const axis = {gridcolor:"#eee", zeroline:false};
+  Plotly.react("plotLog", [
+      {x:hr.t, y:hr.P, name:"Δt = 1 hr", line:{color:"#c88a3a",width:1.6,dash:"dot"}},
+      {x:min.t, y:min.P, name:"Δt = 1 min", line:{color:"#3a7d44",width:1.6,dash:"dash"}},
+      {x:sec.t, y:sec.P, name:"Δt = 1 s", line:{color:"#3a5f8a",width:2}}],
+    {title:{text:"Cell Population P(t) — Euler at three time steps",font:{size:16}},
+     xaxis:{...axis,title:"time (days)"}, yaxis:{...axis,title:"cells"},
+     shapes:[{type:"line",x0:0,x1:days,y0:0.8*K,y1:0.8*K,line:{color:"#a33",width:1,dash:"dot"}}],
+     annotations:[{x:days,y:0.8*K,text:"80% of K",showarrow:false,xanchor:"right",yanchor:"bottom",font:{size:11,color:"#a33"}}],
+     margin:{t:42,l:70,r:14,b:44}, paper_bgcolor:"#fff", plot_bgcolor:"#fff", legend:{orientation:"h",y:1.12}},
+    {responsive:true});
+  Plotly.react("plotdP", [
+      {x:sec.t, y:sec.dP, line:{color:"#8a2b3f",width:2}}],
+    {title:{text:"Growth rate dP/dt (peaks at P = K/2)",font:{size:16}},
+     xaxis:{...axis,title:"time (days)"}, yaxis:{...axis,title:"cells/day"},
+     margin:{t:42,l:70,r:14,b:44}, paper_bgcolor:"#fff", plot_bgcolor:"#fff"},
+    {responsive:true});
+}
+
+/* ---------- Problem 2: predator-prey ---------- */
+function runPP(){
+  const x0 = +$("x0").value, y0 = +$("y0").value, tEnd = +$("tpp").value;
+  $("vX0").textContent = x0; $("vY0").textContent = y0; $("vTpp").textContent = tEnd;
+  const dt = 0.01;                      // assignment: fixed-step Euler, Δt = 0.01
+  const n = Math.round(tEnd/dt);
+  const keep = Math.max(1, Math.round(n/8000));
+  const ts=[], xs=[], ys=[], dxs=[], dys=[];
+  let x=x0, y=y0;
+  for(let k=0;k<=n;k++){
+    const dx = x*(1-x/100) - 2.5*x*y;
+    const dy = -y + 0.25*x*y;
+    if(k%keep===0){ ts.push(k*dt); xs.push(x); ys.push(y); dxs.push(dx); dys.push(dy); }
+    x += dt*dx; y += dt*dy;
+    if(x<0)x=0; if(y<0)y=0;
+  }
+  const axis = {gridcolor:"#eee", zeroline:false};
+  const lay=(t,xt,yt)=>({title:{text:t,font:{size:15}},xaxis:{...axis,title:xt},yaxis:{...axis,title:yt},
+    margin:{t:40,l:60,r:14,b:44},paper_bgcolor:"#fff",plot_bgcolor:"#fff",legend:{orientation:"h",y:1.14}});
+  Plotly.react("plotPPt",[
+      {x:ts,y:xs,name:"x (prey)",line:{color:"#3a5f8a",width:1.8}},
+      {x:ts,y:ys,name:"y (predator)",line:{color:"#8a2b3f",width:1.8}}],
+    lay("Populations vs time","time (weeks)","population (thousands)"),{responsive:true});
+  Plotly.react("plotPPxy",[
+      {x:xs,y:ys,mode:"lines",line:{color:"#3a7d44",width:1.5}},
+      {x:[4],y:[0.384],mode:"markers+text",text:["equilibrium (4, 0.384)"],textposition:"top right",
+       marker:{color:"#a33",size:9,symbol:"x"},showlegend:false}],
+    lay("Phase portrait: y vs x","x (thousands)","y (thousands)"),{responsive:true});
+  Plotly.react("plotdx",[
+      {x:xs,y:dxs,mode:"lines",line:{color:"#3a5f8a",width:1.4}}],
+    lay("Phase plane: dx/dt vs x (limit spiral)","x","dx/dt"),{responsive:true});
+  Plotly.react("plotdy",[
+      {x:ys,y:dys,mode:"lines",line:{color:"#8a2b3f",width:1.4}}],
+    lay("Phase plane: dy/dt vs y (limit spiral)","y","dy/dt"),{responsive:true});
+}
+
+/* ---------- Problem 3: three species ---------- */
+let logY = false;
+function run3(){
+  const tEnd = +$("t3").value;
+  const dt = Math.pow(10, +$("dt3").value);
+  const xAtt = (+$("xr").value)*1e-6;
+  const m = (+$("mC").value)*1e4;
+  $("vT3").textContent = tEnd; $("vDt3").textContent = dt.toPrecision(2);
+  $("vXr").textContent = (+$("xr").value).toFixed(1); $("vM").textContent = (+$("mC").value).toFixed(1);
+
+  const k1=1.25, k2=2.0, CC1=1e10, CC2=1e10, nAtt=0.9;
+  let b=1e4, s=1e4, p=1e2;
+  const n = Math.round(tEnd/dt);
+  const keep = Math.max(1, Math.round(n/6000));
+  const ts=[], bs=[], ss=[], ps=[];
+  let blew=false;
+  for(let k=0;k<=n;k++){
+    if(k%keep===0){ ts.push(k*dt); bs.push(b); ss.push(s); ps.push(p); }
+    const db = k1*b*(1-b/CC1) - xAtt*b*p;
+    const ds = k2*s*(1-s/CC2 - m*b/CC2);
+    const dp = p*(xAtt*b - nAtt);
+    b += dt*db; s += dt*ds; p += dt*dp;
+    if(!isFinite(b)||!isFinite(s)||!isFinite(p)||b>1e14){ blew=true; break; }
+    if(b<0)b=0; if(s<0)s=0; if(p<0)p=0;
+  }
+  const axis = {gridcolor:"#eee", zeroline:false};
+  Plotly.react("plot3",[
+      {x:ts,y:bs,name:"Bacillus subtilis (b)",line:{color:"#3a5f8a",width:2}},
+      {x:ts,y:ss,name:"Staph. aureus (s)",line:{color:"#c88a3a",width:2}},
+      {x:ts,y:ps,name:"bacteriophage (p)",line:{color:"#3a7d44",width:2}}],
+    {title:{text: blew ? "⚠ Euler solution DIVERGED — this is what stiffness does! Reduce Δt." : "Three-species populations",
+            font:{size:16, color: blew ? "#a33" : "#2b2b2b"}},
+     xaxis:{...axis,title:"time (hours)"},
+     yaxis:{...axis,title:"population", type: logY ? "log" : "linear"},
+     margin:{t:42,l:70,r:14,b:44}, paper_bgcolor:"#fff", plot_bgcolor:"#fff", legend:{orientation:"h",y:1.1}},
+    {responsive:true});
+}
+$("linBtn").onclick=()=>{logY=false;$("linBtn").classList.add("active");$("logBtn").classList.remove("active");run3();};
+$("logBtn").onclick=()=>{logY=true;$("logBtn").classList.add("active");$("linBtn").classList.remove("active");run3();};
+
+["seed","rGrow"].forEach(id=>$(id).addEventListener("input",runLogistic));
+["x0","y0","tpp"].forEach(id=>$(id).addEventListener("input",runPP));
+["t3","dt3","xr","mC"].forEach(id=>$(id).addEventListener("input",run3));
+runLogistic(); runPP(); run3();
+</script>
+</main>
+</body>
+</html>

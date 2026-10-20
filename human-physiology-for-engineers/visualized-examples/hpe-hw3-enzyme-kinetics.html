@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homework 3 &mdash; Enzyme Kinetics (Michaelis-Menten, Lineweaver-Burk, Hill)</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root { --accent:#8a6d2b; --bg:#faf8f5; --ink:#2b2b2b; --muted:#6b6b6b; }
+  * { box-sizing:border-box; }
+  body { font-family:Georgia,'Times New Roman',serif; margin:0; background:var(--bg); color:var(--ink); }
+  header { background:linear-gradient(135deg,#5e4a1d,#8a6d2b); color:#fff; padding:28px 36px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; opacity:.92; max-width:950px; }
+  main { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  .card { background:#fff; border:1px solid #e5ddd3; border-radius:10px; padding:18px 22px; margin-bottom:22px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  h2 { font-size:20px; margin:4px 0 10px; color:var(--accent); }
+  .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px 26px; }
+  .ctl label { display:flex; justify-content:space-between; font-size:14px; margin-bottom:2px; }
+  .ctl label b { font-family:Consolas,monospace; color:var(--accent); }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .readouts { display:flex; flex-wrap:wrap; gap:14px; margin-top:10px; }
+  .readout { background:#f3eee0; border-radius:8px; padding:10px 16px; min-width:140px; text-align:center; }
+  .readout .val { font-size:19px; font-weight:bold; color:var(--accent); font-family:Consolas,monospace; }
+  .readout .lbl { font-size:12px; color:var(--muted); }
+  .note { font-size:13.5px; color:var(--muted); line-height:1.55; }
+  .plot { width:100%; height:340px; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:900px){ .row2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header>
+  <h1>Homework 3 &mdash; Enzyme Kinetics</h1>
+  <p>Problem 1: full dynamical model E + S &#8652; C &rarr; E + P against the Michaelis-Menten approximation.
+     Problem 2: K<sub>m</sub> from initial-velocity data. Problem 4: Lineweaver-Burk with an uncompetitive inhibitor.
+     Problem 5: Michaelis-Menten vs Hill dynamics for PFK-1. &nbsp;<a href="index.html" style="color:#ede0bd">&larr; back to index</a></p>
+</header>
+<main>
+
+<!-- ============ PROBLEM 1 ============ -->
+<div class="card">
+  <h2>Problem 1 &mdash; Full dynamics vs Michaelis-Menten</h2>
+  <p class="note">From the data table: V&#8320; = V<sub>max</sub>s&#8320;/(K<sub>m</sub>+s&#8320;) fits exactly with
+  <b>V<sub>max</sub> = 5 mM/min</b> (the one correct statement) and K<sub>m</sub> = 3 mM. With e&#8320; = 10 mM:
+  k&#8322; = V<sub>max</sub>/e&#8320; = 0.5/min, and using k<sub>f</sub> = 10k<sub>r</sub> in K<sub>m</sub> = (k<sub>r</sub>+k&#8322;)/k<sub>f</sub>:
+  k<sub>f</sub> &asymp; 0.172/min, k<sub>r</sub> &asymp; 0.0172/min. The three ODEs:
+  ds/dt = &minus;k<sub>f</sub>&thinsp;e&thinsp;s + k<sub>r</sub>c, &nbsp; dc/dt = k<sub>f</sub>&thinsp;e&thinsp;s &minus; (k<sub>r</sub>+k&#8322;)c, &nbsp; dp/dt = k&#8322;c, with e = e&#8320;&minus;c.</p>
+  <div class="controls">
+    <div class="ctl"><label>s&#8320; (mM) <b id="vS0"></b></label><input type="range" id="s0" min="1" max="30" step="0.5" value="12"></div>
+    <div class="ctl"><label>e&#8320; (mM) <b id="vE0"></b></label><input type="range" id="e0" min="1" max="30" step="0.5" value="10"></div>
+    <div class="ctl"><label>k<sub>f</sub> (/mM/min) <b id="vKf"></b></label><input type="range" id="kf" min="0.02" max="2" step="0.01" value="0.17"></div>
+    <div class="ctl"><label>k&#8322; (/min) <b id="vK2"></b></label><input type="range" id="k2" min="0.05" max="3" step="0.01" value="0.5"></div>
+  </div>
+  <div class="readouts">
+    <div class="readout"><div class="val" id="roKm">&ndash;</div><div class="lbl">K<sub>m</sub> = (k<sub>r</sub>+k&#8322;)/k<sub>f</sub> (mM)</div></div>
+    <div class="readout"><div class="val" id="roVmax">&ndash;</div><div class="lbl">V<sub>max</sub> = k&#8322;e&#8320; (mM/min)</div></div>
+  </div>
+  <div class="row2">
+    <div id="plotShort" class="plot"></div>
+    <div id="plotLong" class="plot"></div>
+  </div>
+  <p class="note">Why the curves differ: Michaelis-Menten assumes the complex C is in <i>quasi-steady state</i> and that s &asymp; s&#8320;
+  initially. During the first fraction of a minute (left plot) the complex is still forming, so the MM product curve leads the true
+  one; late in the reaction substrate depletion makes both converge.</p>
+</div>
+
+<!-- ============ PROBLEM 2 ============ -->
+<div class="card">
+  <h2>Problem 2 &mdash; Determine K<sub>m</sub> by inspection, then simulate</h2>
+  <p class="note">V<sub>max</sub> = 6.0 &micro;M/s. The data row V&#8320; = 3.0 &micro;M/s (= &frac12;V<sub>max</sub>) occurs at [S]&#8320; = 100 mM &mdash;
+  so <b>K<sub>m</sub> = 100 mM</b> with no calculation needed. Drag the K<sub>m</sub> slider and watch the curve pass through the data.</p>
+  <div class="controls">
+    <div class="ctl"><label>K<sub>m</sub> (mM) <b id="vKm2"></b></label><input type="range" id="km2" min="20" max="300" step="5" value="100"></div>
+    <div class="ctl"><label>S&#8320; for time simulation (mM) <b id="vS02"></b></label><input type="range" id="s02" min="50" max="800" step="10" value="200"></div>
+  </div>
+  <div class="row2">
+    <div id="plotMM2" class="plot"></div>
+    <div id="plotProg2" class="plot"></div>
+  </div>
+</div>
+
+<!-- ============ PROBLEM 4 ============ -->
+<div class="card">
+  <h2>Problem 4 &mdash; Lineweaver-Burk plot with an inhibitor</h2>
+  <p class="note">1/V = (K<sub>m</sub>/V<sub>max</sub>)(1/[S]) + 1/V<sub>max</sub>. Both datasets are fitted live by least squares.
+  The two lines come out <b>nearly parallel</b> (slope ratio &asymp;1.3 &mdash; for real experimental data that difference is unlikely
+  to be significant), while V<sub>max</sub> <i>and</i> K<sub>m</sub> both fall by about the same factor (&asymp;3&times;). Parallel
+  Lineweaver-Burk lines with proportionally reduced V<sub>max</sub> and K<sub>m</sub> are the signature of <b>uncompetitive
+  inhibition</b>: the inhibitor binds only the ES complex, so adding more substrate produces <i>more</i> complex to inhibit &mdash;
+  the inhibition <i>cannot</i> be overridden by extra substrate.</p>
+  <div class="readouts">
+    <div class="readout"><div class="val" id="roVm4a">&ndash;</div><div class="lbl">V<sub>max</sub> no inhibitor (&micro;mol/min)</div></div>
+    <div class="readout"><div class="val" id="roKm4a">&ndash;</div><div class="lbl">K<sub>m</sub> no inhibitor (M)</div></div>
+    <div class="readout"><div class="val" id="roVm4b">&ndash;</div><div class="lbl">V<sub>max</sub> + inhibitor</div></div>
+    <div class="readout"><div class="val" id="roKm4b">&ndash;</div><div class="lbl">K<sub>m</sub> + inhibitor</div></div>
+    <div class="readout"><div class="val" id="roSlope">&ndash;</div><div class="lbl">slope ratio (inh : none)</div></div>
+  </div>
+  <div class="row2">
+    <div id="plotLB" class="plot"></div>
+    <div id="plotMM4" class="plot"></div>
+  </div>
+</div>
+
+<!-- ============ PROBLEM 5 ============ -->
+<div class="card">
+  <h2>Problem 5 &mdash; PFK-1: Michaelis-Menten or Hill?</h2>
+  <p class="note">The experimental curve is sigmoidal (slow start, then steep rise) &mdash; that is <b>Hill dynamics</b>, i.e. cooperative
+  binding: V = V<sub>max</sub>[S]<sup>n</sup>/(K<sup>n</sup>+[S]<sup>n</sup>). Adjust the sliders to fit the data; the best MM fit
+  (dashed) can never reproduce the sigmoid foot at low [S].</p>
+  <div class="controls">
+    <div class="ctl"><label>Hill coefficient n <b id="vN5"></b></label><input type="range" id="n5" min="0.5" max="4" step="0.05" value="2"></div>
+    <div class="ctl"><label>Hill K (half-saturation) <b id="vK5"></b></label><input type="range" id="k5" min="0.5" max="10" step="0.1" value="3"></div>
+    <div class="ctl"><label>V<sub>max</sub> <b id="vVm5"></b></label><input type="range" id="vm5" min="10" max="50" step="0.5" value="30"></div>
+  </div>
+  <div class="readouts">
+    <div class="readout"><div class="val" id="roRMS">&ndash;</div><div class="lbl">RMS error of your Hill fit</div></div>
+  </div>
+  <div id="plotHill" class="plot"></div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const axis = {gridcolor:"#eee", zeroline:false};
+const lay=(t,xt,yt,extra)=>Object.assign({title:{text:t,font:{size:16}},xaxis:{...axis,title:xt},yaxis:{...axis,title:yt},
+  margin:{t:42,l:64,r:14,b:46},paper_bgcolor:"#fff",plot_bgcolor:"#fff",legend:{orientation:"h",y:1.14}},extra||{});
+
+/* ---------- Problem 1 ---------- */
+function runP1(){
+  const s0=+$("s0").value, e0=+$("e0").value, kf=+$("kf").value, k2=+$("k2").value;
+  const kr = kf/10;   // assignment: kf = 10 kr
+  $("vS0").textContent=s0; $("vE0").textContent=e0; $("vKf").textContent=kf.toFixed(2); $("vK2").textContent=k2.toFixed(2);
+  const Km=(kr+k2)/kf, Vmax=k2*e0;
+  $("roKm").textContent=Km.toFixed(2); $("roVmax").textContent=Vmax.toFixed(2);
+
+  function fullSim(tEnd){
+    let s=s0,c=0,p=0;
+    const dt=Math.min(0.0005, tEnd/20000), n=Math.round(tEnd/dt), keep=Math.max(1,Math.round(n/1500));
+    const ts=[],ss=[],cs=[],ps=[];
+    for(let k=0;k<=n;k++){
+      if(k%keep===0){ ts.push(k*dt); ss.push(s); cs.push(c); ps.push(p); }
+      const e=e0-c;
+      const ds=-kf*e*s+kr*c, dc=kf*e*s-(kr+k2)*c, dp=k2*c;
+      s+=dt*ds; c+=dt*dc; p+=dt*dp;
+    }
+    return {ts,ss,cs,ps};
+  }
+  function mmSim(tEnd){
+    let s=s0,p=0;
+    const dt=Math.min(0.001,tEnd/10000), n=Math.round(tEnd/dt), keep=Math.max(1,Math.round(n/1500));
+    const ts=[],ps=[],ss=[];
+    for(let k=0;k<=n;k++){
+      if(k%keep===0){ ts.push(k*dt); ps.push(p); ss.push(s); }
+      const v=Vmax*s/(Km+s);
+      s-=dt*v; p+=dt*v; if(s<0)s=0;
+    }
+    return {ts,ps,ss};
+  }
+  const f1=fullSim(1), m1=mmSim(1), f30=fullSim(30), m30=mmSim(30);
+  Plotly.react("plotShort",[
+      {x:f1.ts,y:f1.cs,name:"complex C (full model)",line:{color:"#8a6d2b",width:2}},
+      {x:f1.ts,y:f1.ps,name:"product P (full model)",line:{color:"#3a7d44",width:2}},
+      {x:m1.ts,y:m1.ps,name:"product P (MM approx.)",line:{color:"#3a7d44",width:2,dash:"dot"}}],
+    lay("Complex-formation phase (first minute)","time (min)","mM"),{responsive:true});
+  Plotly.react("plotLong",[
+      {x:f30.ts,y:f30.ss,name:"substrate S (full)",line:{color:"#3a5f8a",width:2}},
+      {x:f30.ts,y:f30.ps,name:"product P (full)",line:{color:"#3a7d44",width:2}},
+      {x:m30.ts,y:m30.ps,name:"product P (MM)",line:{color:"#3a7d44",width:2,dash:"dot"}},
+      {x:m30.ts,y:m30.ss,name:"substrate S (MM)",line:{color:"#3a5f8a",width:2,dash:"dot"}}],
+    lay("Full product formation (30 min)","time (min)","mM"),{responsive:true});
+}
+
+/* ---------- Problem 2 ---------- */
+const DATA2 = {S:[20,50,100,200,500], V:[1,2,3,4,5]};
+function runP2(){
+  const Km=+$("km2").value, s0=+$("s02").value, Vmax=6.0;
+  $("vKm2").textContent=Km; $("vS02").textContent=s0;
+  const ss=[],vs=[];
+  for(let s=0;s<=800;s+=4){ ss.push(s); vs.push(Vmax*s/(Km+s)); }
+  Plotly.react("plotMM2",[
+      {x:ss,y:vs,name:"V = 6·S/(Km+S)",line:{color:"#8a6d2b",width:2}},
+      {x:DATA2.S,y:DATA2.V,name:"experimental data",mode:"markers",marker:{color:"#a33",size:9}}],
+    lay("Initial velocity vs [S]₀","[S]₀ (mM)","V₀ (µM/s)",
+      {shapes:[{type:"line",x0:0,x1:800,y0:3,y1:3,line:{color:"#bbb",width:1,dash:"dot"}}],
+       annotations:[{x:780,y:3,text:"½Vmax",showarrow:false,yanchor:"bottom",font:{size:11,color:"#888"}}]}),
+    {responsive:true});
+  // progress curve: ds/dt = −Vmax s/(Km+s), units: s in mM, V in µM/s → slow! convert Vmax to mM/s = 6e-3
+  const Vm_mM = 6e-3;
+  let s=s0,p=0;
+  const tEndH = 100;      // hours
+  const dt=2, n=Math.round(tEndH*3600/dt), keep=Math.max(1,Math.round(n/2000));
+  const ts=[],ps=[],s_=[];
+  for(let k=0;k<=n;k++){
+    if(k%keep===0){ ts.push(k*dt/3600); ps.push(p); s_.push(s); }
+    const v=Vm_mM*s/(Km+s);
+    s-=dt*v; p+=dt*v; if(s<0)s=0;
+  }
+  Plotly.react("plotProg2",[
+      {x:ts,y:s_,name:"substrate",line:{color:"#3a5f8a",width:2}},
+      {x:ts,y:ps,name:"product",line:{color:"#3a7d44",width:2}}],
+    lay("Product formation over time (note: hours — the reaction is slow!)","time (hours)","mM"),{responsive:true});
+}
+
+/* ---------- Problem 4 ---------- */
+const DATA4 = {
+  S:[6e-6,1e-5,2e-5,6e-5,1.8e-4,3e-4],
+  V:[20.8,29,45,67.6,87,92],
+  Vi:[12,15,20,24,27,27]
+};
+function lsq(xs,ys){
+  const n=xs.length;
+  const sx=xs.reduce((a,b)=>a+b,0), sy=ys.reduce((a,b)=>a+b,0);
+  const sxx=xs.reduce((a,b)=>a+b*b,0), sxy=xs.reduce((a,b,i)=>a+b*ys[i],0);
+  const m=(n*sxy-sx*sy)/(n*sxx-sx*sx), c=(sy-m*sx)/n;
+  return {m,c};
+}
+function runP4(){
+  const invS=DATA4.S.map(s=>1/s);
+  const invV=DATA4.V.map(v=>1/v), invVi=DATA4.Vi.map(v=>1/v);
+  const f1=lsq(invS,invV), f2=lsq(invS,invVi);
+  const Vm1=1/f1.c, Km1=f1.m*Vm1, Vm2=1/f2.c, Km2=f2.m*Vm2;
+  $("roVm4a").textContent=Vm1.toFixed(1); $("roKm4a").textContent=Km1.toExponential(2);
+  $("roVm4b").textContent=Vm2.toFixed(1); $("roKm4b").textContent=Km2.toExponential(2);
+  $("roSlope").textContent=(f2.m/f1.m).toFixed(2)+" : 1";
+  const xs=[0,Math.max(...invS)*1.05];
+  Plotly.react("plotLB",[
+      {x:invS,y:invV,name:"no inhibitor (data)",mode:"markers",marker:{color:"#3a5f8a",size:9}},
+      {x:xs,y:xs.map(x=>f1.m*x+f1.c),name:"fit (no inhibitor)",line:{color:"#3a5f8a",width:2}},
+      {x:invS,y:invVi,name:"+ inhibitor (data)",mode:"markers",marker:{color:"#a33",size:9,symbol:"square"}},
+      {x:xs,y:xs.map(x=>f2.m*x+f2.c),name:"fit (+ inhibitor)",line:{color:"#a33",width:2}}],
+    lay("Lineweaver-Burk: 1/V vs 1/[S]","1/[S]  (1/M)","1/V  (min/µmol)"),{responsive:true});
+  const ss=[],v1=[],v2=[];
+  for(let s=0;s<=3.2e-4;s+=2e-6){ ss.push(s); v1.push(Vm1*s/(Km1+s)); v2.push(Vm2*s/(Km2+s)); }
+  Plotly.react("plotMM4",[
+      {x:ss,y:v1,name:"no inhibitor",line:{color:"#3a5f8a",width:2}},
+      {x:DATA4.S,y:DATA4.V,mode:"markers",marker:{color:"#3a5f8a",size:8},showlegend:false},
+      {x:ss,y:v2,name:"+ inhibitor",line:{color:"#a33",width:2}},
+      {x:DATA4.S,y:DATA4.Vi,mode:"markers",marker:{color:"#a33",size:8,symbol:"square"},showlegend:false}],
+    lay("Same data in direct (MM) coordinates","[S] (M)","V (µmol/min)"),{responsive:true});
+}
+
+/* ---------- Problem 5 ---------- */
+const DATA5 = {S:[0.1,0.5,1,2,3,5,7,10,13,16,18,20,24], V:[0.1,1.1,3,9,15,22,26,28,29,29.5,30,30,30]};
+function runP5(){
+  const n=+$("n5").value, K=+$("k5").value, Vm=+$("vm5").value;
+  $("vN5").textContent=n.toFixed(2); $("vK5").textContent=K.toFixed(1); $("vVm5").textContent=Vm.toFixed(1);
+  const ss=[],vh=[],vmm=[];
+  for(let s=0.01;s<=26;s+=0.1){
+    ss.push(s);
+    vh.push(Vm*Math.pow(s,n)/(Math.pow(K,n)+Math.pow(s,n)));
+    vmm.push(30*s/(3+s));           // best simple MM with same Vmax & half-point for comparison
+  }
+  let rms=0;
+  DATA5.S.forEach((s,i)=>{ const f=Vm*Math.pow(s,n)/(Math.pow(K,n)+Math.pow(s,n)); rms+=(f-DATA5.V[i])**2; });
+  rms=Math.sqrt(rms/DATA5.S.length);
+  $("roRMS").textContent=rms.toFixed(2);
+  Plotly.react("plotHill",[
+      {x:DATA5.S,y:DATA5.V,name:"PFK-1 data",mode:"markers",marker:{color:"#a33",size:9}},
+      {x:ss,y:vh,name:`Hill fit (n=${n.toFixed(2)}, K=${K.toFixed(1)}, Vmax=${Vm.toFixed(0)})`,line:{color:"#8a6d2b",width:2.5}},
+      {x:ss,y:vmm,name:"Michaelis-Menten (n=1) — cannot fit the sigmoid",line:{color:"#3a5f8a",width:2,dash:"dot"}}],
+    lay("PFK-1 velocity vs F-6-P concentration","S(0)","velocity of F-1,6-BP production"),{responsive:true});
+}
+
+["s0","e0","kf","k2"].forEach(id=>$(id).addEventListener("input",runP1));
+["km2","s02"].forEach(id=>$(id).addEventListener("input",runP2));
+["n5","k5","vm5"].forEach(id=>$(id).addEventListener("input",runP5));
+runP1(); runP2(); runP4(); runP5();
+</script>
+</main>
+</body>
+</html>

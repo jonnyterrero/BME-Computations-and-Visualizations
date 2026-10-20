@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PFE I &middot; Homework 1 &mdash; Blood Pressure (Windkessel) Model</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root { --accent:#b3593a; --bg:#faf8f5; --card:#ffffff; --ink:#2b2b2b; --muted:#6b6b6b; }
+  * { box-sizing:border-box; }
+  body { font-family:Georgia,'Times New Roman',serif; margin:0; background:var(--bg); color:var(--ink); }
+  header { background:linear-gradient(135deg,#7c3a26,#b3593a); color:#fff; padding:28px 36px; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; opacity:.92; max-width:900px; }
+  nav a { color:#ffd9c9; }
+  main { max-width:1200px; margin:0 auto; padding:24px 20px 60px; }
+  .card { background:var(--card); border:1px solid #e5ddd3; border-radius:10px; padding:18px 22px; margin-bottom:22px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+  h2 { font-size:19px; margin:4px 0 10px; color:#7c3a26; }
+  .controls { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px 26px; }
+  .ctl label { display:flex; justify-content:space-between; font-size:14px; margin-bottom:2px; }
+  .ctl label b { font-family:Consolas,monospace; color:var(--accent); }
+  input[type=range] { width:100%; accent-color:var(--accent); }
+  .presets { margin:14px 0 4px; display:flex; flex-wrap:wrap; gap:8px; }
+  .presets button { font:14px Georgia,serif; padding:7px 14px; border:1px solid var(--accent); background:#fff; color:var(--accent); border-radius:20px; cursor:pointer; }
+  .presets button:hover, .presets button.active { background:var(--accent); color:#fff; }
+  .readouts { display:flex; flex-wrap:wrap; gap:14px; margin-top:8px; }
+  .readout { background:#f4ede4; border-radius:8px; padding:10px 16px; min-width:130px; text-align:center; }
+  .readout .val { font-size:22px; font-weight:bold; color:#7c3a26; font-family:Consolas,monospace; }
+  .readout .lbl { font-size:12px; color:var(--muted); }
+  .note { font-size:13.5px; color:var(--muted); line-height:1.5; }
+  .plot { width:100%; height:340px; }
+  .chk { font-size:14px; display:flex; align-items:center; gap:8px; margin-top:6px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Homework 1 &mdash; Blood Pressure Model (Systemic Arteries / Windkessel)</h1>
+  <p>Interactive version of <code>sa.m</code> / <code>in_sa.m</code> / <code>Psa_new.m</code> / <code>QAo_now.m</code>.
+     Aortic flow Q<sub>Ao</sub>(t) is a triangular systolic pulse; arterial pressure follows
+     C<sub>sa</sub>&thinsp;dP<sub>sa</sub>/dt = Q<sub>Ao</sub> &minus; P<sub>sa</sub>/R<sub>s</sub>, solved with the same
+     semi-implicit Euler update used in the MATLAB code. &nbsp;<a href="index.html" style="color:#ffd9c9">&larr; back to index</a></p>
+</header>
+<main>
+
+<div class="card">
+  <h2>Scenario presets (from the assignment)</h2>
+  <div class="presets" id="presets"></div>
+  <p class="note" id="presetNote">Baseline course parameters. Adjust the compliance slider to reproduce Exercise&nbsp;3: find C<sub>sa</sub> giving &asymp;120/80&nbsp;mmHg.</p>
+</div>
+
+<div class="card">
+  <h2>Model parameters</h2>
+  <div class="controls">
+    <div class="ctl"><label>Heart rate (beats/min) <b id="vHR"></b></label><input type="range" id="HR" min="40" max="180" step="1" value="80"></div>
+    <div class="ctl"><label>Systemic compliance C<sub>sa</sub> (L/mmHg) <b id="vCsa"></b></label><input type="range" id="Csa" min="0.0004" max="0.004" step="0.00005" value="0.00175"></div>
+    <div class="ctl"><label>Systemic resistance R<sub>s</sub> (mmHg/(L/min)) <b id="vRs"></b></label><input type="range" id="Rs" min="5" max="40" step="0.01" value="17.86"></div>
+    <div class="ctl"><label>Peak aortic flow Q<sub>max</sub> (L/min) <b id="vQmax"></b></label><input type="range" id="Qmax" min="10" max="80" step="0.5" value="28"></div>
+    <div class="ctl"><label>Systole fraction T<sub>S</sub>/T <b id="vTsf"></b></label><input type="range" id="Tsf" min="0.2" max="0.6" step="0.01" value="0.4"></div>
+    <div class="ctl"><label>Initial pressure P<sub>sa</sub>(0) (mmHg) <b id="vP0"></b></label><input type="range" id="P0" min="0" max="150" step="1" value="80"></div>
+  </div>
+  <div class="chk">
+    <input type="checkbox" id="blockOn">
+    <label for="blockOn">Heart block (Exercise: ventricle stops at <b>1.8 s</b>, resumes at <b>7.8 s</b> &mdash; Q<sub>Ao</sub>=0 for 0.03&ndash;0.13 min)</label>
+  </div>
+  <div class="readouts">
+    <div class="readout"><div class="val" id="roBP">&ndash;</div><div class="lbl">Blood pressure (sys/dia, mmHg)</div></div>
+    <div class="readout"><div class="val" id="roPP">&ndash;</div><div class="lbl">Pulse pressure (mmHg)</div></div>
+    <div class="readout"><div class="val" id="roCO">&ndash;</div><div class="lbl">Cardiac output (L/min)</div></div>
+    <div class="readout"><div class="val" id="roSV">&ndash;</div><div class="lbl">Stroke volume (mL)</div></div>
+    <div class="readout"><div class="val" id="roMAP">&ndash;</div><div class="lbl">Mean arterial pressure</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div id="plotQ" class="plot"></div>
+  <div id="plotP" class="plot"></div>
+</div>
+
+<div class="card">
+  <h2>What the assignment explores</h2>
+  <p class="note">
+    <b>Arteriosclerosis</b> = stiffening of the large arteries &rarr; decrease <b>C<sub>sa</sub></b>. Systolic pressure rises and diastolic
+    falls (widened pulse pressure) because a stiff reservoir can no longer store systolic volume and recoil during diastole.<br>
+    <b>Arteriolosclerosis</b> = narrowing of the arterioles &rarr; increase <b>R<sub>s</sub></b>. Both systolic and diastolic rise together
+    (&asymp;150/105) since the same cardiac output must cross a higher resistance.<br>
+    <b>Obesity</b>: heart rate and Q<sub>max</sub> increase to perfuse extra tissue &rarr; hypertension with elevated cardiac output.<br>
+    <b>Exercise</b>: R<sub>s</sub> halves (muscle vasodilation) while heart rate and Q<sub>max</sub> roughly double &rarr; CO doubles with little change in pressure.<br>
+    <b>Heart block</b>: when beats stop, pressure decays exponentially with time constant R<sub>s</sub>C<sub>sa</sub>; recovery after
+    resumption takes several beats, explaining syncope.
+  </p>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const sliders = ["HR","Csa","Rs","Qmax","Tsf","P0"];
+
+const PRESETS = [
+  {name:"Course defaults", vals:{HR:80,Csa:0.00175,Rs:17.86,Qmax:28,Tsf:0.4,P0:0,block:false},
+   note:"Values straight from in_sa.m (Psa starts at 0 to show the equilibration transient over 16 beats)."},
+  {name:"Normal 120/80 (tuned Csa)", vals:{HR:80,Csa:0.00107,Rs:17.86,Qmax:28,Tsf:0.4,P0:80,block:false},
+   note:"Exercise 3: compliance decreased from 0.00175 until pressure is ≈120/80 mmHg. This becomes the 'normal' for later exercises."},
+  {name:"Arteriosclerosis ≈140/65", vals:{HR:80,Csa:0.00062,Rs:17.86,Qmax:28,Tsf:0.4,P0:65,block:false},
+   note:"Stiff arteries: Csa reduced further. Systolic up, diastolic down — widened pulse pressure."},
+  {name:"Arteriosclerosis ≈180/50", vals:{HR:80,Csa:0.00040,Rs:17.86,Qmax:28,Tsf:0.4,P0:50,block:false},
+   note:"Severe stiffening. Note the very wide pulse pressure typical of elderly idiopathic systolic hypertension."},
+  {name:"Arteriolosclerosis ≈150/105", vals:{HR:80,Csa:0.00107,Rs:22.5,Qmax:28,Tsf:0.4,P0:105,block:false},
+   note:"Increased arteriolar resistance Rs: both systolic AND diastolic rise. Compare the shape with arteriosclerosis."},
+  {name:"Morbid obesity (HR 100, Qmax +40%)", vals:{HR:100,Csa:0.00107,Rs:17.86,Qmax:39.2,Tsf:0.4,P0:100,block:false},
+   note:"T, TS, TMAX divided by 1.25 (HR→100) and Qmax up 40%. Hypertension driven by increased cardiac output, not stiffness or resistance."},
+  {name:"Exercise (HR 160, Rs halved, Qmax ×2)", vals:{HR:160,Csa:0.00107,Rs:8.93,Qmax:56,Tsf:0.4,P0:95,block:false},
+   note:"Autoregulatory vasodilation halves Rs; HR and stroke volume rise so CO ≈ doubles while arterial pressure stays near normal."},
+  {name:"2nd-degree heart block", vals:{HR:80,Csa:0.00107,Rs:17.86,Qmax:28,Tsf:0.4,P0:80,block:true},
+   note:"QAo forced to zero from t=0.03 min (1.8 s) to t=0.13 min (7.8 s). Watch the exponential pressure decay (τ = Rs·Csa) and the slow recovery — the basis of syncope in heart block."},
+];
+
+function buildPresets(){
+  const holder = $("presets");
+  PRESETS.forEach((p,i)=>{
+    const b = document.createElement("button");
+    b.textContent = p.name;
+    b.onclick = ()=>{
+      for(const k of sliders) if(k in p.vals) $(k).value = p.vals[k];
+      $("blockOn").checked = !!p.vals.block;
+      $("presetNote").innerHTML = p.note;
+      document.querySelectorAll("#presets button").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      run();
+    };
+    holder.appendChild(b);
+  });
+}
+
+function QAo(t, T, TS, TMAX, QMAX, block){
+  if(block && t>=0.03 && t<=0.13) return 0;      // heart block window (minutes)
+  const tc = t % T;
+  if(tc < TS) return (tc < TMAX) ? QMAX*tc/TMAX : QMAX*(TS-tc)/(TS-TMAX);
+  return 0;
+}
+
+function run(){
+  const HR   = +$("HR").value;
+  const Csa  = +$("Csa").value;
+  const Rs   = +$("Rs").value;
+  const QMAX = +$("Qmax").value;
+  const Tsf  = +$("Tsf").value;
+  const P0   = +$("P0").value;
+  const block = $("blockOn").checked;
+
+  $("vHR").textContent = HR;
+  $("vCsa").textContent = Csa.toFixed(5);
+  $("vRs").textContent = Rs.toFixed(2);
+  $("vQmax").textContent = QMAX.toFixed(1);
+  $("vTsf").textContent = Tsf.toFixed(2);
+  $("vP0").textContent = P0;
+
+  const T = 1/HR;            // minutes per beat
+  const TS = Tsf*T;
+  const TMAX = 0.4*TS;       // course: TMAX = 0.16 T with TS = 0.4 T  → 0.4·TS
+  const dt = 0.01*T;         // 100 steps per cycle, same as in_sa.m
+  const tEnd = block ? 0.2 : 16*T;   // heart-block exercise runs 0.2 min (12 s)
+  const n = Math.ceil(tEnd/dt);
+
+  const t_s = new Array(n), Q_a = new Array(n), P_a = new Array(n);
+  let Psa = P0;
+  for(let k=0;k<n;k++){
+    const t = (k+1)*dt;
+    const Q = QAo(t, T, TS, TMAX, QMAX, block);
+    Psa = (Psa + dt*Q/Csa)/(1 + dt/(Rs*Csa));   // exact Psa_new.m update
+    t_s[k] = t*60;         // display axis in seconds
+    Q_a[k] = Q;
+    P_a[k] = Psa;
+  }
+
+  // Steady-state metrics from the final full cycle (skip transient)
+  const per = Math.round(T/dt);
+  const lastCycle = P_a.slice(n-per);
+  const sys = Math.max(...lastCycle), dia = Math.min(...lastCycle);
+  const map = lastCycle.reduce((a,b)=>a+b,0)/lastCycle.length;
+  const SV = 0.5*TS*QMAX;                 // triangular pulse area (L)
+  const CO = SV*HR;                       // L/min
+  $("roBP").textContent = `${sys.toFixed(0)} / ${dia.toFixed(0)}`;
+  $("roPP").textContent = (sys-dia).toFixed(0);
+  $("roCO").textContent = CO.toFixed(2);
+  $("roSV").textContent = (SV*1000).toFixed(0);
+  $("roMAP").textContent = map.toFixed(0);
+
+  const axis = {gridcolor:"#eee", zeroline:false};
+  Plotly.react("plotQ", [{x:t_s, y:Q_a, mode:"lines", line:{color:"#b3593a", width:2}, name:"QAo",
+    hovertemplate:"t=%{x:.2f} s<br>Q=%{y:.1f} L/min<extra></extra>"}],
+    {title:{text:"Aortic Flow  Q<sub>Ao</sub>(t)", font:{size:17}}, xaxis:{...axis,title:"time (s)"},
+     yaxis:{...axis,title:"flow (L/min)"}, margin:{t:44,l:60,r:20,b:45}, paper_bgcolor:"#fff", plot_bgcolor:"#fff"},
+    {responsive:true});
+  Plotly.react("plotP", [{x:t_s, y:P_a, mode:"lines", line:{color:"#2b5f8a", width:2}, name:"Psa",
+    hovertemplate:"t=%{x:.2f} s<br>P=%{y:.1f} mmHg<extra></extra>"}],
+    {title:{text:"Systemic Arterial Pressure  P<sub>sa</sub>(t)", font:{size:17}}, xaxis:{...axis,title:"time (s)"},
+     yaxis:{...axis,title:"pressure (mmHg)"}, margin:{t:44,l:60,r:20,b:45}, paper_bgcolor:"#fff", plot_bgcolor:"#fff",
+     shapes: block ? [{type:"rect", x0:1.8, x1:7.8, y0:0, y1:1, yref:"paper", fillcolor:"rgba(179,89,58,.10)", line:{width:0}}] : [],
+     annotations: block ? [{x:4.8, y:1.02, yref:"paper", text:"ventricular arrest", showarrow:false, font:{color:"#b3593a", size:12}}] : []},
+    {responsive:true});
+}
+
+buildPresets();
+sliders.forEach(id=>$(id).addEventListener("input", run));
+$("blockOn").addEventListener("change", run);
+run();
+</script>
+</main>
+</body>
+</html>
