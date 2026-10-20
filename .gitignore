@@ -15,6 +15,9 @@ __pycache__/
 .ruff_cache/
 .ipynb_checkpoints/
 
+# Local agent tooling
+.claude/
+
 # Personal scratch space (only the README is tracked)
 scratch/*
 !scratch/README.md
