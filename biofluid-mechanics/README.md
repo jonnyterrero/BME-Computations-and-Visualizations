@@ -4,11 +4,11 @@ Research-grade interactive models for blood rheology, arterial hydrostatics, cap
 
 ## Open the visualization
 
-**[Launch the Biofluid Mechanics dashboard](https://jonnyterrero.github.io/BME-Visualizations/biofluid-mechanics/dashboard.html)**
+**[Launch the Biofluid Mechanics dashboard](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biofluid-mechanics/dashboard.html)**
 
-**[Launch the Arterial Stenosis Hemodynamics tool](https://jonnyterrero.github.io/BME-Visualizations/biofluid-mechanics/atherosclerosis-cfd.html)**
+**[Launch the Arterial Stenosis Hemodynamics tool](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biofluid-mechanics/atherosclerosis-cfd.html)**
 
-**[Launch the Sleep Apnea & CPAP Relief simulation](https://jonnyterrero.github.io/BME-Visualizations/biofluid-mechanics/sleep-apnea-simulation.html)**
+**[Launch the Sleep Apnea & CPAP Relief simulation](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biofluid-mechanics/sleep-apnea-simulation.html)**
 
 Or open [`dashboard.html`](dashboard.html) locally in a browser.
 
@@ -55,7 +55,7 @@ Simulated presets (8 h, untreated → CPAP 10 cmH₂O, averaged over four random
 ### Put it in a PowerPoint
 
 1. **Video (works offline, most reliable).** Insert → Video → This Device and pick a clip from [`sleep-apnea-media/`](sleep-apnea-media/): `walkthrough.mp4` (captioned tour), or the clean per-scene clips `scene1-airway.mp4`, `scene2-night.mp4`, `scene3-relief-valve.mp4`. In Playback set Start to *Automatically* (and *Loop until stopped* for scene 1).
-2. **Live and interactive.** After this branch is merged to `main` and GitHub Pages is on, the page is at `https://jonnyterrero.github.io/BME-Visualizations/biofluid-mechanics/sleep-apnea-simulation.html`. Insert a still from `sleep-apnea-media/` and give it a hyperlink to that URL (Insert → Link) to open the live page during the talk, or use a web-page add-in such as *Web Viewer* or *LiveWeb* (availability depends on your PowerPoint version and platform; needs internet).
+2. **Live and interactive.** After this branch is merged to `main` and GitHub Pages is on, the page is at `https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biofluid-mechanics/sleep-apnea-simulation.html`. Insert a still from `sleep-apnea-media/` and give it a hyperlink to that URL (Insert → Link) to open the live page during the talk, or use a web-page add-in such as *Web Viewer* or *LiveWeb* (availability depends on your PowerPoint version and platform; needs internet).
 3. **Offline and interactive.** The page is one self-contained HTML file with no external requests. Copy it next to the deck and hyperlink a slide object to it (Insert → Link → Existing File); it opens in the default browser.
 
 URL parameters for slide-sized embeds: `?scene=1|2|3` · `&embed=1` (trims header buttons) · `&autoplay=1` (starts the tour) · `&patient=healthy|mild|moderate|severe` · `&cpap=1` · `&stage=REM`. Example: `sleep-apnea-simulation.html?scene=3&embed=1`. The stage is a fixed 16:9 canvas that scales to any frame; use at least ~800 px wide for readable text. The page needs a modern browser engine (Chromium, WebKit or Firefox); if an add-in shows a blank frame, use the video instead. Keys: `1 2 3` scenes, `Space` pause, `F` full screen.
@@ -65,3 +65,12 @@ This is a teaching model, not a validated clinical simulator.
 ## How to use
 
 Switch tabs in the header. Hydrostatics and capillary panels update as soon as you move a slider. No install required.
+
+## Coursework
+
+| Folder | What it holds |
+| --- | --- |
+| [`in-class/`](in-class/) | Dated in-class examples and derivations |
+| [`computations/`](computations/) | Homework and computational assignments |
+
+The course-wide history is in the root [work log](../LOG.md).

@@ -4,7 +4,7 @@ Functional building blocks of a biomedical measurement chain, drawn to IEC 60601
 
 ## Open the visualization
 
-**[Launch the architecture diagram](https://jonnyterrero.github.io/BME-Visualizations/medical-instrument-architecture/architecture.html)**
+**[Launch the architecture diagram](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biomedical-instrumentation/medical-instrument-architecture/architecture.html)**
 
 Or open [`architecture.html`](architecture.html) locally in a browser.
 

@@ -4,7 +4,7 @@ Sagittal-plane knee model for static equilibrium: external load torque versus th
 
 ## Open the visualization
 
-**[Launch the knee joint simulator](https://jonnyterrero.github.io/BME-Visualizations/biomechanics/simulator.html)**
+**[Launch the knee joint simulator](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biomechanics/simulator.html)**
 
 Or open [`simulator.html`](simulator.html) locally in a browser.
 
@@ -23,3 +23,12 @@ Or open [`simulator.html`](simulator.html) locally in a browser.
 ## How to use
 
 Drag **System Mass**, **External Moment Arm**, and **Muscle Insertion**. Torque and force update immediately; the force arrows move with the moment arms.
+
+## Coursework
+
+| Folder | What it holds |
+| --- | --- |
+| [`in-class/`](in-class/) | Dated in-class examples and derivations |
+| [`computations/`](computations/) | Homework and computational assignments |
+
+The course-wide history is in the root [work log](../LOG.md).

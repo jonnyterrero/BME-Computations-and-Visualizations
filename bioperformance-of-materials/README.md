@@ -4,7 +4,7 @@ Interactive synthesis for the FGCU senior project **Surface-Dependent Fibroblast
 
 ## Open the visualization
 
-**[Launch the Bioperformance dashboard](https://jonnyterrero.github.io/BME-Visualizations/bioperformance-of-materials/dashboard.html)**
+**[Launch the Bioperformance dashboard](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/bioperformance-of-materials/dashboard.html)**
 
 Or open [`dashboard.html`](dashboard.html) locally in a browser.
 

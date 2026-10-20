@@ -4,9 +4,9 @@ Four-panel instrumentation models from Webster and Northrop: source loading, tra
 
 ## Open the visualizations
 
-**[Launch the signal-model dashboard](https://jonnyterrero.github.io/BME-Visualizations/biomedical-signal-models/visualizations.html)** — loading, linearity, CMRR, noise.
+**[Launch the signal-model dashboard](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biomedical-instrumentation/biomedical-signal-models/visualizations.html)** — loading, linearity, CMRR, noise.
 
-**[Launch the biosignal filter bank](https://jonnyterrero.github.io/BME-Visualizations/biomedical-signal-models/filter-bank.html)** — high-pass, low-pass, band-pass, and notch frequency responses over the physiological spectrum.
+**[Launch the biosignal filter bank](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biomedical-instrumentation/biomedical-signal-models/filter-bank.html)** — high-pass, low-pass, band-pass, and notch frequency responses over the physiological spectrum.
 
 Or open [`visualizations.html`](visualizations.html) / [`filter-bank.html`](filter-bank.html) locally in a browser.
 
@@ -18,7 +18,8 @@ Or open [`visualizations.html`](visualizations.html) / [`filter-bank.html`](filt
 | [`filter-bank.html`](filter-bank.html) | Interactive frequency-response explorer for the four signal-conditioning filters (draggable cutoffs, dB/linear axis, 50/60 Hz line toggle) |
 | [`biomedical_signal_models_visualizations.py`](biomedical_signal_models_visualizations.py) | Original matplotlib / NumPy source (same physics as the dashboard) |
 | [`instrumentation_constraints.png`](instrumentation_constraints.png) | Static four-panel figure generated from the Python script |
-| [`requirements.txt`](requirements.txt) | Python dependencies if you want to re-render the figure locally |
+
+Python dependencies are managed once for the whole repo in [`pyproject.toml`](../../pyproject.toml).
 
 ## Topics in the visualization
 
@@ -39,9 +40,8 @@ Each filter's magnitude response \(|H(f)|\) is drawn on a shared log-frequency a
 ## Run the Python figure
 
 ```bash
-cd biomedical-signal-models
-python -m pip install -r requirements.txt
-python biomedical_signal_models_visualizations.py
+uv sync   # from the repo root, once
+uv run python biomedical-instrumentation/biomedical-signal-models/biomedical_signal_models_visualizations.py
 ```
 
 Uncomment `plt.show()` at the bottom of the script, or add `plt.savefig("instrumentation_constraints.png")`.

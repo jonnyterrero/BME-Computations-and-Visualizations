@@ -1,0 +1,26 @@
+{
+    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.executeInFileDir": true,
+    "python.testing.pytestEnabled": true,
+    "python.testing.pytestArgs": ["tools/tests"],
+    "jupyter.notebookFileRoot": "${fileDirname}",
+    "jupyter.interactiveWindow.creationMode": "perFile",
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true,
+        "**/.ruff_cache": true
+    },
+    "search.exclude": {
+        ".venv": true,
+        "**/node_modules": true
+    },
+    "files.watcherExclude": {
+        "**/.venv/**": true,
+        "**/node_modules/**": true
+    }
+}

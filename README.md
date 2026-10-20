@@ -1,29 +1,72 @@
-# BME Visualizations
+# BME Computations and Visualizations
 
-Computational models, dashboards, derivations, and interactive graphs used across FGCU biomedical engineering courses.
+Computational models, interactive visualizations, in-class work, and homework computations from my biomedical engineering coursework at FGCU. Every entry is dated, so this repo doubles as a running record of the work.
 
-Each class is a folder on `main`. Open the folder for that course, then click the visualization file (or the GitHub Pages link in the class README).
+- **Live site:** [jonnyterrero.github.io/BME-Computations-and-Visualizations](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/)
+- **Work log:** [`LOG.md`](LOG.md), a chronological index of every in-class entry and computation across courses
 
-## Classes
+## Courses
 
-| Class folder | Topic | Open visualization |
+| Course | Highlights | Open visualization |
 | --- | --- | --- |
-| [`bioperformance-of-materials/`](bioperformance-of-materials/) | Bioperformance of Materials — GO fibroblast recovery synthesis | [dashboard.html](https://jonnyterrero.github.io/BME-Visualizations/bioperformance-of-materials/dashboard.html) |
-| [`biofluid-mechanics/`](biofluid-mechanics/) | Biofluid Mechanics — rheology, hydrostatics, capillary rise; arterial-stenosis CFD; sleep apnea and CPAP expiratory-relief simulation | [dashboard.html](https://jonnyterrero.github.io/BME-Visualizations/biofluid-mechanics/dashboard.html) · [atherosclerosis-cfd.html](https://jonnyterrero.github.io/BME-Visualizations/biofluid-mechanics/atherosclerosis-cfd.html) · [sleep-apnea-simulation.html](https://jonnyterrero.github.io/BME-Visualizations/biofluid-mechanics/sleep-apnea-simulation.html) |
-| [`medical-instrument-architecture/`](medical-instrument-architecture/) | Medical Instrument Architecture — IEC 60601 signal chain | [architecture.html](https://jonnyterrero.github.io/BME-Visualizations/medical-instrument-architecture/architecture.html) |
-| [`biomedical-signal-models/`](biomedical-signal-models/) | Biomedical Signal Models — loading, linearity, CMRR, noise; filter bank (HPF/LPF/band-pass/notch) | [visualizations.html](https://jonnyterrero.github.io/BME-Visualizations/biomedical-signal-models/visualizations.html) · [filter-bank.html](https://jonnyterrero.github.io/BME-Visualizations/biomedical-signal-models/filter-bank.html) |
-| [`biomechanics/`](biomechanics/) | Biomechanics — sagittal-plane knee torque and patellar-tendon force | [simulator.html](https://jonnyterrero.github.io/BME-Visualizations/biomechanics/simulator.html) |
+| [Biofluid Mechanics](biofluid-mechanics/) | Blood rheology, hydrostatics, capillary rise; arterial-stenosis CFD; sleep apnea and CPAP expiratory-relief simulation | [dashboard](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biofluid-mechanics/dashboard.html) · [stenosis CFD](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biofluid-mechanics/atherosclerosis-cfd.html) · [sleep apnea](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biofluid-mechanics/sleep-apnea-simulation.html) |
+| [Biomedical Instrumentation](biomedical-instrumentation/) | IEC 60601 signal chain; electrode loading, linearity, CMRR, Johnson noise; biosignal filter bank | [architecture](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biomedical-instrumentation/medical-instrument-architecture/architecture.html) · [signal models](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biomedical-instrumentation/biomedical-signal-models/visualizations.html) · [filter bank](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biomedical-instrumentation/biomedical-signal-models/filter-bank.html) |
+| [Circuits](circuits/) | DC/AC analysis, transients, phasors, frequency response, op-amps | |
+| [Biomechanics](biomechanics/) | Sagittal-plane knee torque and patellar-tendon force | [knee simulator](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/biomechanics/simulator.html) |
+| [Human Physiology for Engineers](human-physiology-for-engineers/) | Quantitative physiology: transport, excitable cells, cardiovascular and respiratory systems | |
+| [Bioperformance of Materials](bioperformance-of-materials/) | Graphene oxide fibroblast recovery synthesis and slide deck | [dashboard](https://jonnyterrero.github.io/BME-Computations-and-Visualizations/bioperformance-of-materials/dashboard.html) |
 
-Catalog homepage: [jonnyterrero.github.io/BME-Visualizations](https://jonnyterrero.github.io/BME-Visualizations/)
+## Layout
 
-After merge, enable **GitHub Pages** once: repo Settings → Pages → Source: GitHub Actions. Until Pages is on, open any dashboard with [htmlpreview](https://htmlpreview.github.io/?https://github.com/jonnyterrero/BME-Visualizations/blob/main/index.html) or download the `.html` file and open it locally.
+```
+<course>/
+├── README.md              course overview and visualization links
+├── in-class/              work done in lecture or lab
+│   └── YYYY-MM-DD-<topic>/
+│       ├── README.md      problem, approach, results, takeaways
+│       ├── main.py        the computation (# %% cells)
+│       └── figures/       saved plots
+├── computations/          homework and computational assignments (same entry layout)
+└── *.html                 interactive visualizations, served by GitHub Pages
+```
 
-## How to view
+`LOG.md` and the `in-class/README.md` / `computations/README.md` indexes are generated from the entry folders by `tools/worklog.py`. CI fails if they are out of date.
 
-1. Click a class folder in this repository.
-2. Read that folder's `README.md` for what the model covers.
-3. Open the HTML visualization from GitHub Pages, or download the file and open it in a browser.
+## Working in Cursor
 
-GitHub's file browser shows HTML as source. Use the Pages links above (or open the `.html` files locally) to actually run the dashboards.
+One-time setup (requires [uv](https://docs.astral.sh/uv/)):
 
-Python source for the signal-model figure is in [`biomedical-signal-models/`](biomedical-signal-models/). The Graphene Oxide slide deck lives under [`bioperformance-of-materials/graphene-oxide-presentation/`](bioperformance-of-materials/graphene-oxide-presentation/).
+```bash
+uv sync
+```
+
+This creates `.venv/` with NumPy, SciPy, SymPy, Matplotlib, pandas, Pint, python-control, and a Jupyter kernel. Cursor picks it up automatically via `.vscode/settings.json`.
+
+Start a new entry:
+
+```bash
+uv run tools/worklog.py new circuits in-class "Thevenin equivalents" --tags thevenin,nodal
+uv run tools/worklog.py new biofluid-mechanics computation "Poiseuille flow in a stenosis"
+uv run tools/worklog.py new human-physiology-for-engineers in-class "Nernst potential" --date 2026-10-14
+```
+
+Then open the generated `main.py`:
+
+- **Run cell by cell:** click *Run Cell* above any `# %%` marker or press Shift+Enter. Output and plots appear in the interactive window.
+- **Run the whole file:** `uv run python <path>/main.py`, or F5 with the *Python: current file* launch config.
+- **Notebooks:** `.ipynb` files also work; select the `.venv` kernel.
+
+Fill in the entry `README.md` (the **Problem** paragraph becomes the summary in the course index), then refresh the log and commit:
+
+```bash
+uv run tools/worklog.py build
+git add -A && git commit -m "circuits: Thevenin equivalents (in-class)"
+```
+
+Quick experiments that should not be published go in [`scratch/`](scratch/), which is git-ignored.
+
+Courses are registered in [`tools/courses.toml`](tools/courses.toml). To add one, add an entry there and create the folder.
+
+## Viewing the visualizations
+
+GitHub's file browser shows HTML as source. Use the live site links above, or open any `.html` file locally in a browser. GitHub Pages deploys from `main` via `.github/workflows/pages.yml`.

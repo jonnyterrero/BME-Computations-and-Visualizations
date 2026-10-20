@@ -1,0 +1,36 @@
+[project]
+name = "bme-computations"
+version = "0.1.0"
+description = "Course computations, in-class work, and visualizations for FGCU biomedical engineering."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.1",
+    "scipy>=1.14",
+    "sympy>=1.13",
+    "matplotlib>=3.9",
+    "pandas>=2.2",
+    "pint>=0.24",
+    "control>=0.10",
+    "ipykernel>=6.29",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "ruff>=0.8",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["bioperformance-of-materials/graphene-oxide-presentation"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tools/tests"]

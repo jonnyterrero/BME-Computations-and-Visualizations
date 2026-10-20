@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BME Visualizations</title>
-    <meta name="description" content="Course visualizations for FGCU biomedical engineering: bioperformance, biofluids, instrumentation, signal models, and biomechanics.">
+    <title>BME Computations and Visualizations</title>
+    <meta name="description" content="Course computations, in-class work, and interactive visualizations from FGCU biomedical engineering: biofluids, instrumentation, circuits, biomechanics, physiology, and biomaterials.">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script>
@@ -30,71 +30,84 @@
 <body class="min-h-screen font-sans">
     <header class="max-w-6xl mx-auto px-6 pt-12 pb-8">
         <p class="text-sky-400 text-sm font-semibold tracking-wide uppercase mb-3">FGCU Biomedical Engineering</p>
-        <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight">BME Visualizations</h1>
+        <h1 class="text-4xl md:text-5xl font-bold text-white tracking-tight">BME Computations and Visualizations</h1>
         <p class="mt-4 max-w-3xl text-slate-400">
-            Interactive models, dashboards, and derivations used across core BME courses.
-            Open a class folder, then launch the visualization for that topic.
+            Interactive models, dashboards, in-class work, and computations from core BME courses.
+            Every entry is dated, so the work log doubles as a record of the coursework over time.
         </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+            <a href="https://github.com/jonnyterrero/BME-Computations-and-Visualizations/blob/main/LOG.md" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Work log</a>
+            <a href="https://github.com/jonnyterrero/BME-Computations-and-Visualizations" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Source on GitHub</a>
+        </div>
     </header>
 
     <main class="max-w-6xl mx-auto px-6 pb-16 grid gap-6 md:grid-cols-2">
         <article class="card glass rounded-2xl p-6">
-            <p class="text-xs uppercase tracking-wider text-sky-400 font-semibold">Class 1</p>
-            <h2 class="text-2xl font-bold text-white mt-1">Bioperformance of Materials</h2>
-            <p class="text-sm text-slate-400 mt-3">Experimental pipeline, governing biomechanics, ISO 10993 biocompatibility, and FGCU lab feasibility for the GO fibroblast recovery project.</p>
-            <div class="mt-5 flex flex-wrap gap-3">
-                <a href="bioperformance-of-materials/dashboard.html" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Open visualization</a>
-                <a href="https://github.com/jonnyterrero/BME-Visualizations/tree/main/bioperformance-of-materials" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Class folder</a>
-            </div>
-        </article>
-
-        <article class="card glass rounded-2xl p-6">
-            <p class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Class 2</p>
+            <p class="text-xs uppercase tracking-wider text-emerald-400 font-semibold">Course</p>
             <h2 class="text-2xl font-bold text-white mt-1">Biofluid Mechanics</h2>
             <p class="text-sm text-slate-400 mt-3">Rheology of plasma vs whole blood, arterial hydrostatics, and Jurin's law capillary rise — plus an interactive atherosclerotic-stenosis hemodynamics simulator (velocity heat map, pressure drop, wall shear stress) and a sleep-apnea / CPAP expiratory-relief physiology simulation (airway collapse, a full night, relief valve).</p>
             <div class="mt-5 flex flex-wrap gap-3">
                 <a href="biofluid-mechanics/dashboard.html" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Open dashboard</a>
                 <a href="biofluid-mechanics/atherosclerosis-cfd.html" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Stenosis CFD</a>
                 <a href="biofluid-mechanics/sleep-apnea-simulation.html" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Sleep apnea sim</a>
-                <a href="https://github.com/jonnyterrero/BME-Visualizations/tree/main/biofluid-mechanics" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Class folder</a>
+                <a href="https://github.com/jonnyterrero/BME-Computations-and-Visualizations/tree/main/biofluid-mechanics" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Course folder</a>
             </div>
         </article>
 
         <article class="card glass rounded-2xl p-6">
-            <p class="text-xs uppercase tracking-wider text-amber-400 font-semibold">Class 3</p>
-            <h2 class="text-2xl font-bold text-white mt-1">Medical Instrument Architecture</h2>
-            <p class="text-sm text-slate-400 mt-3">IEC 60601 signal chain from measurand to display, isolation barrier, and cascaded system transfer function.</p>
+            <p class="text-xs uppercase tracking-wider text-amber-400 font-semibold">Course</p>
+            <h2 class="text-2xl font-bold text-white mt-1">Biomedical Instrumentation</h2>
+            <p class="text-sm text-slate-400 mt-3">IEC 60601 signal chain from measurand to display with the isolation barrier and cascaded transfer function; skin-electrode loading, thermistor vs strain-gauge linearity, instrumentation-amplifier CMRR, and Johnson noise; and a filter bank mapping HPF/LPF/band-pass/notch responses onto the physiological spectrum.</p>
             <div class="mt-5 flex flex-wrap gap-3">
-                <a href="medical-instrument-architecture/architecture.html" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Open visualization</a>
-                <a href="https://github.com/jonnyterrero/BME-Visualizations/tree/main/medical-instrument-architecture" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Class folder</a>
+                <a href="biomedical-instrumentation/medical-instrument-architecture/architecture.html" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Instrument architecture</a>
+                <a href="biomedical-instrumentation/biomedical-signal-models/visualizations.html" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Signal models</a>
+                <a href="biomedical-instrumentation/biomedical-signal-models/filter-bank.html" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Filter bank</a>
+                <a href="https://github.com/jonnyterrero/BME-Computations-and-Visualizations/tree/main/biomedical-instrumentation" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Course folder</a>
             </div>
         </article>
 
         <article class="card glass rounded-2xl p-6">
-            <p class="text-xs uppercase tracking-wider text-violet-400 font-semibold">Class 4</p>
-            <h2 class="text-2xl font-bold text-white mt-1">Biomedical Signal Models</h2>
-            <p class="text-sm text-slate-400 mt-3">Skin-electrode loading, thermistor vs strain-gauge linearity, instrumentation-amplifier CMRR, and Johnson noise floors — plus a filter bank mapping HPF/LPF/band-pass/notch responses onto the physiological spectrum.</p>
+            <p class="text-xs uppercase tracking-wider text-violet-400 font-semibold">Course</p>
+            <h2 class="text-2xl font-bold text-white mt-1">Circuits</h2>
+            <p class="text-sm text-slate-400 mt-3">DC and AC circuit analysis, Thévenin/Norton equivalents, first- and second-order transients, phasors, frequency response, and op-amp circuits.</p>
             <div class="mt-5 flex flex-wrap gap-3">
-                <a href="biomedical-signal-models/visualizations.html" class="bg-violet-400 hover:bg-violet-300 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Open visualization</a>
-                <a href="biomedical-signal-models/filter-bank.html" class="bg-violet-400 hover:bg-violet-300 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Filter bank</a>
-                <a href="https://github.com/jonnyterrero/BME-Visualizations/tree/main/biomedical-signal-models" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Class folder</a>
+                <a href="https://github.com/jonnyterrero/BME-Computations-and-Visualizations/tree/main/circuits" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Course folder</a>
             </div>
         </article>
 
         <article class="card glass rounded-2xl p-6">
-            <p class="text-xs uppercase tracking-wider text-rose-400 font-semibold">Class 5</p>
+            <p class="text-xs uppercase tracking-wider text-rose-400 font-semibold">Course</p>
             <h2 class="text-2xl font-bold text-white mt-1">Biomechanics</h2>
             <p class="text-sm text-slate-400 mt-3">Sagittal-plane knee simulator: external load torque versus the patellar-tendon force required for static equilibrium.</p>
             <div class="mt-5 flex flex-wrap gap-3">
                 <a href="biomechanics/simulator.html" class="bg-rose-400 hover:bg-rose-300 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Open visualization</a>
-                <a href="https://github.com/jonnyterrero/BME-Visualizations/tree/main/biomechanics" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Class folder</a>
+                <a href="https://github.com/jonnyterrero/BME-Computations-and-Visualizations/tree/main/biomechanics" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Course folder</a>
+            </div>
+        </article>
+
+        <article class="card glass rounded-2xl p-6">
+            <p class="text-xs uppercase tracking-wider text-teal-400 font-semibold">Course</p>
+            <h2 class="text-2xl font-bold text-white mt-1">Human Physiology for Engineers</h2>
+            <p class="text-sm text-slate-400 mt-3">Quantitative physiology: membrane transport and potentials, excitable cells, cardiovascular and respiratory mechanics, renal function, and feedback control of homeostasis.</p>
+            <div class="mt-5 flex flex-wrap gap-3">
+                <a href="https://github.com/jonnyterrero/BME-Computations-and-Visualizations/tree/main/human-physiology-for-engineers" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Course folder</a>
+            </div>
+        </article>
+
+        <article class="card glass rounded-2xl p-6">
+            <p class="text-xs uppercase tracking-wider text-sky-400 font-semibold">Course</p>
+            <h2 class="text-2xl font-bold text-white mt-1">Bioperformance of Materials</h2>
+            <p class="text-sm text-slate-400 mt-3">Experimental pipeline, governing biomechanics, ISO 10993 biocompatibility, and FGCU lab feasibility for the GO fibroblast recovery project.</p>
+            <div class="mt-5 flex flex-wrap gap-3">
+                <a href="bioperformance-of-materials/dashboard.html" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-sm px-4 py-2 rounded-lg">Open visualization</a>
+                <a href="https://github.com/jonnyterrero/BME-Computations-and-Visualizations/tree/main/bioperformance-of-materials" class="border border-slate-600 hover:border-slate-400 text-sm px-4 py-2 rounded-lg">Course folder</a>
             </div>
         </article>
     </main>
 
     <footer class="max-w-6xl mx-auto px-6 pb-12 text-xs text-slate-500">
-        Source, notes, and original files live in each class folder on
-        <a class="text-sky-400 hover:underline" href="https://github.com/jonnyterrero/BME-Visualizations">github.com/jonnyterrero/BME-Visualizations</a>.
+        Source, notes, and original files live in each course folder on
+        <a class="text-sky-400 hover:underline" href="https://github.com/jonnyterrero/BME-Computations-and-Visualizations">github.com/jonnyterrero/BME-Computations-and-Visualizations</a>.
     </footer>
 </body>
 </html>

@@ -1,0 +1,26 @@
+# Course registry. `slug` must match the course folder name at the repo root.
+# tools/worklog.py only scans and scaffolds courses listed here.
+
+[[course]]
+slug = "biofluid-mechanics"
+name = "Biofluid Mechanics"
+
+[[course]]
+slug = "biomedical-instrumentation"
+name = "Biomedical Instrumentation"
+
+[[course]]
+slug = "circuits"
+name = "Circuits"
+
+[[course]]
+slug = "biomechanics"
+name = "Biomechanics"
+
+[[course]]
+slug = "human-physiology-for-engineers"
+name = "Human Physiology for Engineers"
+
+[[course]]
+slug = "bioperformance-of-materials"
+name = "Bioperformance of Materials"
