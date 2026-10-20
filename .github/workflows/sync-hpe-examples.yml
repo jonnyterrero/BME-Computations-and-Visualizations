@@ -1,0 +1,52 @@
+name: Sync HPE examples to Human-Physiology-for-Engineers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "human-physiology-for-engineers/visualized-examples/**"
+      - ".github/workflows/sync-hpe-examples.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-hpe-examples
+  cancel-in-progress: false
+
+env:
+  SOURCE_DIR: human-physiology-for-engineers/visualized-examples
+  TARGET_REPO: jonnyterrero/Human-Physiology-for-Engineers
+  TARGET_DIR: visualized examples
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.TARGET_REPO }}
+          ssh-key: ${{ secrets.HPE_SYNC_DEPLOY_KEY }}
+          path: target
+
+      - name: Mirror folder
+        run: rsync -a --delete "source/$SOURCE_DIR/" "target/$TARGET_DIR/"
+
+      - name: Commit and push if changed
+        working-directory: target
+        run: |
+          git add -A -- "$TARGET_DIR"
+          if git diff --cached --quiet; then
+            echo "Target already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sync visualized examples from BME-Computations-and-Visualizations@${GITHUB_SHA::7}" \
+                     -m "Source: https://github.com/${GITHUB_REPOSITORY}/tree/${GITHUB_SHA}/${SOURCE_DIR}"
+          git push
